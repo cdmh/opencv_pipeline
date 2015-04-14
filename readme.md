@@ -37,14 +37,14 @@ Lightweight
 
 ```cpp
 using namespace opencv_pipeline;
-"colour.png" | verify | grey | verify | mirror | std::bind(save, "result.png", std::placeholders::_1);
+"colour.png" | verify | grey | verify | mirror | save("result.png");
 ```
 
 That's all there is to it. No fuss, no variables, just a simple pipeline of actions. If you want a copy of the result for further processing, assign the expression to a variable:
 
 ```cpp
 using namespace opencv_pipeline;
-auto grey_mirror = "colour.png" | verify | grey | verify | mirror | std::bind(save, "result.png", std::placeholders::_1);
+auto grey_mirror = "colour.png" | verify | grey | verify | mirror | save("result.png");
 ```
 
 Safe
@@ -70,3 +70,13 @@ Efficient
 ---------
 
 Some efficiency is compromised in the implementation with the hope that the compiler will be able to optimise the resulting code. OpenCV's reference counted `Mat` structures are a pain for optimisation, and return-by-value which should be a move operation isn't because of the ref-counted design.
+
+Examples
+========
+Load a picture of the Mona Lisa, change it to grey scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
+
+```cpp
+using namespace opencv_pipeline;
+std::vector<cv::KeyPoint> keypoints;
+"monalisa.jpg" | verify | grey | detect("HARRIS", keypoints) | extract("SIFT", keypoints) | save("result.png") | noverify;
+```

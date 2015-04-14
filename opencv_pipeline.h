@@ -19,11 +19,55 @@ cv::Mat load(std::string const &pathname)
     return cv::imread(pathname);
 }
 
-// save an image
+namespace detail {
+
+inline
+cv::Mat detect(char const * const detector_class, std::vector<cv::KeyPoint> &keypoints, cv::Mat const &image)
+{
+    auto detector = cv::FeatureDetector::create(detector_class);
+    detector->detect(image, keypoints, cv::Mat());
+    return image;
+}
+
+inline
+cv::Mat extract(char const * const extractor_class, std::vector<cv::KeyPoint> &keypoints, cv::Mat const &image)
+{
+    auto extractor = cv::DescriptorExtractor::create(extractor_class);
+
+    cv::Mat descriptors;
+    extractor->compute(image, keypoints, descriptors);
+    return descriptors;
+}
+
 inline
 cv::Mat save(char const * const pathname, cv::Mat const &image)
 {
     return cv::imwrite(pathname, image)? image : cv::Mat();
+}
+
+}   // namespace detail
+
+// save an image
+inline
+std::function<cv::Mat (cv::Mat const &)>
+save(char const * const pathname)
+{
+    return std::bind(detail::save, pathname, std::placeholders::_1);
+}
+
+// save an image
+inline
+std::function<cv::Mat (cv::Mat const &)>
+detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
+{
+    return std::bind(detail::detect, detector, std::ref(keypoints), std::placeholders::_1);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
+{
+    return std::bind(detail::extract, detector, std::ref(keypoints), std::placeholders::_1);
 }
 
 inline
