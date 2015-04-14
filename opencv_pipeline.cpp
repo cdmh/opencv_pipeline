@@ -21,7 +21,12 @@ void exhaustive()
     std::string(test_file) | verify | grey | mirror | save("result.png") | noverify;
 
     std::vector<cv::KeyPoint> keypoints;
-    test_file | verify | grey | detect("HARRIS", keypoints) | extract("SIFT", keypoints) | save("result.png") | noverify;
+    std::vector<cv::KeyPoint> mirror_keypoints;
+    test_file | verify
+        | grey
+        | detect("HARRIS", keypoints)
+        | extract("SIFT", keypoints)
+        | save("result.png") | noverify;
 }
 
 }   // namespace tests

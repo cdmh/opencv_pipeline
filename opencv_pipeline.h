@@ -1,6 +1,7 @@
 #pragma once
 
 #include "exceptions.h"
+#include "detail.inl"
 #include <functional>
 
 namespace cv_pipeline {
@@ -18,34 +19,6 @@ cv::Mat load(std::string const &pathname)
 {
     return cv::imread(pathname);
 }
-
-namespace detail {
-
-inline
-cv::Mat detect(char const * const detector_class, std::vector<cv::KeyPoint> &keypoints, cv::Mat const &image)
-{
-    auto detector = cv::FeatureDetector::create(detector_class);
-    detector->detect(image, keypoints, cv::Mat());
-    return image;
-}
-
-inline
-cv::Mat extract(char const * const extractor_class, std::vector<cv::KeyPoint> &keypoints, cv::Mat const &image)
-{
-    auto extractor = cv::DescriptorExtractor::create(extractor_class);
-
-    cv::Mat descriptors;
-    extractor->compute(image, keypoints, descriptors);
-    return descriptors;
-}
-
-inline
-cv::Mat save(char const * const pathname, cv::Mat const &image)
-{
-    return cv::imwrite(pathname, image)? image : cv::Mat();
-}
-
-}   // namespace detail
 
 // save an image
 inline
@@ -133,6 +106,5 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
         throw exceptions::bad_image();
     return image;
 }
-
 
 }   // namespace cv_pipeline
