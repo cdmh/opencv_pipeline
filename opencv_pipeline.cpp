@@ -20,13 +20,21 @@ void exhaustive()
     test_file | verify | grey | mirror | save("result.png") | verify;
     std::string(test_file) | verify | grey | mirror | save("result.png") | noverify;
 
-    std::vector<cv::KeyPoint> keypoints;
-    std::vector<cv::KeyPoint> mirror_keypoints;
-    test_file | verify
-        | grey
-        | detect("HARRIS", keypoints)
-        | extract("SIFT", keypoints)
-        | save("result.png") | noverify;
+    auto pipeline = [](
+        char const * const filename,
+        std::vector<cv::KeyPoint> &keypoints)->cv::Mat {
+            return
+            filename| verify
+                | grey
+                | detect("HARRIS", keypoints)
+                | extract("SIFT", keypoints);
+        };
+
+    std::vector<cv::KeyPoint> keypoints1;
+    pipeline("monalisa.jpg", keypoints1) | save("monalise-descriptors.jpg") | noverify;
+
+    std::vector<cv::KeyPoint> keypoints2;
+    pipeline("da_vinci_human11.jpg", keypoints2) | save("da_vinci_human11-descriptors.jpg") | noverify;
 }
 
 }   // namespace tests
