@@ -91,18 +91,20 @@ Reusing a pipeline is straightforward by storing the pipeline in a lambda functi
 
 ```cpp
 auto pipeline = [](
-	char const * const filename,
-	std::vector<cv::KeyPoint> &keypoints)->cv::Mat {
-		return
-		filename| verify
-			| grey
-			| detect("HARRIS", keypoints)
-			| extract("SIFT", keypoints);
-	};
+    char const * const filename,
+    std::vector<cv::KeyPoint> &keypoints)->cv::Mat {
+        return
+        filename| verify
+            | grey
+            | detect("HARRIS", keypoints)
+            | extract("SIFT", keypoints);
+    };
 
 std::vector<cv::KeyPoint> keypoints1;
-pipeline("monalisa.jpg", keypoints1) | save("monalise-descriptors.jpg") | noverify;
+pipeline("monalisa.jpg", keypoints1)
+    | save("monalise-descriptors.jpg") | noverify;
 
 std::vector<cv::KeyPoint> keypoints2;
-pipeline("da_vinci_human11.jpg", keypoints2) | save("da_vinci_human11-descriptors.jpg") | noverify;
+pipeline("da_vinci_human11.jpg", keypoints2)
+    | save("da_vinci_human11-descriptors.jpg") | noverify;
 ```

@@ -1,24 +1,23 @@
 #include "stdafx.h"
 #include "opencv_pipeline.h"
 
-namespace cv_pipeline {
+namespace { // anonymous namespace
 
-namespace tests {
+char const * const test_file = "monalisa.jpg";
 
-void exhaustive()
+void pipelines_without_assignment()
 {
     using namespace cv_pipeline;
-
-    char const * const test_file = "monalisa.jpg";
-
-    cv::Mat img = cv::imread(test_file) | mirror | grey;
-    img = load(test_file) | grey | mirror;
-    img = test_file | verify | grey | mirror;
 
     test_file | verify;
     test_file | verify | grey | verify | mirror | save("result.png");
     test_file | verify | grey | mirror | save("result.png") | verify;
     std::string(test_file) | verify | grey | mirror | save("result.png") | noverify;
+}
+
+void reuse_pipeline()
+{
+    using namespace cv_pipeline;
 
     auto pipeline = [](
         char const * const filename,
@@ -31,15 +30,29 @@ void exhaustive()
         };
 
     std::vector<cv::KeyPoint> keypoints1;
-    pipeline("monalisa.jpg", keypoints1) | save("monalise-descriptors.jpg") | noverify;
+    pipeline("monalisa.jpg", keypoints1)
+        | save("monalise-descriptors.jpg") | noverify;
 
     std::vector<cv::KeyPoint> keypoints2;
-    pipeline("da_vinci_human11.jpg", keypoints2) | save("da_vinci_human11-descriptors.jpg") | noverify;
+    pipeline("da_vinci_human11.jpg", keypoints2)
+        | save("da_vinci_human11-descriptors.jpg") | noverify;
 }
 
-}   // namespace tests
+void exhaustive()
+{
+    using namespace cv_pipeline;
 
-}   // namespace cv_pipeline
+    // loading an image
+    cv::Mat img = cv::imread(test_file) | mirror | grey;
+    img = load(test_file) | grey | mirror;
+    img = test_file | verify | grey | mirror;
+
+    pipelines_without_assignment();
+    reuse_pipeline();
+}
+
+}   // anonymous namespace
+
 
 extern "C" int __stdcall IsDebuggerPresent(void);
 int main(int argc, char *argv[])
@@ -51,6 +64,6 @@ int main(int argc, char *argv[])
 #endif
 
     cv::initModule_nonfree();
-    cv_pipeline::tests::exhaustive();
+    exhaustive();
 	return 0;
 }
