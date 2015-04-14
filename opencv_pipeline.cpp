@@ -9,10 +9,22 @@ void exhaustive()
 {
     using namespace cv_pipeline;
 
-    cv::Mat img;
-    img = cv::imread("..\\..\\..\\..\\test data\\caltech\\101_ObjectCategories\\anchor\\image_0008.jpg") | mirror | grey;
-    img = load("..\\..\\..\\..\\test data\\images\\Mona_Lisa_headcrop.jpg") | grey | mirror;
-    img = "..\\..\\..\\..\\test data\\images\\Mona_Lisa_headcrop.jpg" | verify | grey | mirror;
+    char const * const test_file = "..\\..\\..\\..\\test data\\images\\Mona_Lisa_headcrop.jpg";
+
+    cv::Mat img = cv::imread(test_file) | mirror | grey;
+    img = load(test_file) | grey | mirror;
+    img = test_file | verify | grey | mirror;
+
+    test_file | verify;
+    test_file | verify | grey | verify | mirror | std::bind(save, "result.png", std::placeholders::_1);
+    test_file | verify | grey | mirror | std::bind(save, "result.png", std::placeholders::_1) | verify;
+    std::string(test_file) | verify | grey | mirror | std::bind(save, "result.png", std::placeholders::_1) | noverify;
+
+    auto image1 = test_file | noverify | grey;
+
+    auto image = test_file | noverify;
+	if (!image.empty())
+	    image = image | grey;
 }
 
 }   // namespace tests
@@ -22,14 +34,5 @@ void exhaustive()
 int main(int argc, char *argv[])
 {
     cv_pipeline::tests::exhaustive();
-
-    cv::Mat img = cv::imread("..\\..\\..\\..\\test data\\images\\Mona_Lisa_headcrop.jpg");
-    if (img.empty())
-        throw std::runtime_error("file not found");
-
-    cvtColor(img, img, cv::COLOR_BGR2GRAY);
-    cvtColor(img, img, cv::COLOR_GRAY2BGR);
-    cv::flip(img, img, 1);
-
 	return 0;
 }

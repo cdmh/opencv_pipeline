@@ -15,6 +15,15 @@ class image_not_found : public std::runtime_error
     }
 };
 
+class bad_image : public std::runtime_error
+{
+  public:
+    bad_image()
+      : runtime_error("bad_image")
+    {
+    }
+};
+
 }   // namespace exceptions
 
 }   // namespace cv_pipeline
