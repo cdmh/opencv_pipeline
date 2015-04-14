@@ -44,19 +44,17 @@ extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
 }
 
 inline
-cv::Mat grey(cv::Mat const &img)
+cv::Mat grey(cv::Mat image)
 {
-    cv::Mat image;
-    cvtColor(img, image, cv::COLOR_BGR2GRAY);
+    cvtColor(image, image, cv::COLOR_BGR2GRAY);
     cvtColor(image, image, cv::COLOR_GRAY2BGR);
     return image;
 }
 
 inline
-cv::Mat mirror(cv::Mat const &img)
+cv::Mat mirror(cv::Mat image)
 {
-    cv::Mat image;
-    flip(img, image, 1);
+    flip(image, image, 1);
     return image;
 }
 
