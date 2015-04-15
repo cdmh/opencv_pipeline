@@ -24,6 +24,9 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\opencv_pipeline_impl.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -32,5 +35,10 @@
     <ClCompile Include="test_pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\include\detail.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
