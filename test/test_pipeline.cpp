@@ -5,6 +5,25 @@ namespace { // anonymous namespace
 
 char const * const test_file = "monalisa.jpg";
 
+void detect_features()
+{
+    using namespace cv_pipeline;
+
+    std::vector<cv::KeyPoint> keypoints;
+    "monalisa.jpg" | verify
+        | grey
+        | detect("HARRIS", keypoints)
+        | extract("SIFT", keypoints);
+
+    std::vector<std::vector<cv::Point>> regions1;
+    auto mscr_sift = "da_vinci_human11.jpg" | verify
+        | detect("MSCR", regions1) | extract("SIFT", regions1);
+
+    std::vector<std::vector<cv::Point>> regions2;
+    auto mser_sift = "da_vinci_human11.jpg" | verify
+        | detect("MSER", regions2) | extract("SIFT", regions2);
+}
+
 void pipelines_without_assignment()
 {
     using namespace cv_pipeline;
@@ -19,23 +38,16 @@ void reuse_pipeline()
 {
     using namespace cv_pipeline;
 
-    auto pipeline = [](
-        char const * const filename,
-        std::vector<cv::KeyPoint> &keypoints)->cv::Mat {
-            return
-            filename| verify
-                | grey
-                | detect("HARRIS", keypoints)
-                | extract("SIFT", keypoints);
+    auto pipeline = [](char const * const filename)->cv::Mat {
+            std::vector<cv::KeyPoint> keypoints;
+            return filename| verify | grey | mirror;
         };
 
-    std::vector<cv::KeyPoint> keypoints1;
-    pipeline("monalisa.jpg", keypoints1)
-        | save("monalise-descriptors.jpg") | noverify;
+    pipeline("monalisa.jpg")
+        | save("monalise-grey-mirror.png") | noverify;
 
-    std::vector<cv::KeyPoint> keypoints2;
-    pipeline("da_vinci_human11.jpg", keypoints2)
-        | save("da_vinci_human11-descriptors.jpg") | noverify;
+    pipeline("da_vinci_human11.jpg")
+        | save("da_vinci_human11-grey-mirror.png") | noverify;
 }
 
 void exhaustive()
@@ -48,6 +60,7 @@ void exhaustive()
     img = test_file | verify | grey | mirror;
 
     pipelines_without_assignment();
+    detect_features();
     reuse_pipeline();
 }
 

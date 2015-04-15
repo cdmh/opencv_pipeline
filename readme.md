@@ -37,14 +37,14 @@ Lightweight
 
 ```cpp
 using namespace opencv_pipeline;
-"colour.png" | verify | grey | verify | mirror | save("result.png");
+"colour.png" | verify | grey | mirror | save("result.png");
 ```
 
 That's all there is to it. No fuss, no variables, just a simple pipeline of actions. If you want a copy of the result for further processing, assign the expression to a variable:
 
 ```cpp
 using namespace opencv_pipeline;
-auto grey_mirror = "colour.png" | verify | grey | verify | mirror | save("result.png");
+auto grey_mirror = "colour.png" | verify | grey | mirror | save("result.png");
 ```
 
 Safe
@@ -74,37 +74,46 @@ Some efficiency is compromised in the implementation with the hope that the comp
 Examples
 ========
 
-Extracting Features
--------------------
+Extracting Features from Keypoints
+----------------------------------
 
 Load a picture of the Mona Lisa, change it to grey scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
-
 ```cpp
 using namespace opencv_pipeline;
 std::vector<cv::KeyPoint> keypoints;
 "monalisa.jpg" | verify | grey | detect("HARRIS", keypoints) | extract("SIFT", keypoints) | save("result.png") | noverify;
 ```
 
+Extracting  Features from Regions
+---------------------------------
+
+You want features from maximally stable regions instead of keypoints? Ok,
+```cpp
+using namespace opencv_pipeline;
+std::vector<std::vector<cv::Point>> regions;
+"monalisa.jpg" | verify
+    | detect("MSCR", regions) | extract("SIFT", keypoints)
+    | save("result.png") | noverify;
+```
+
+
 Reusing a pipeline
 ------------------
 Reusing a pipeline is straightforward by storing the pipeline in a lambda function and call it for multiple images.
 
 ```cpp
-auto pipeline = [](
-    char const * const filename,
-    std::vector<cv::KeyPoint> &keypoints)->cv::Mat {
-        return
-        filename| verify
-            | grey
-            | detect("HARRIS", keypoints)
-            | extract("SIFT", keypoints);
-    };
+auto pipeline = [](char const * const filename)->cv::Mat {
+    std::vector<cv::KeyPoint> keypoints;
+    return
+    filename| verify
+        | grey
+        | detect("HARRIS", keypoints)
+        | extract("SIFT", keypoints);
+};
 
-std::vector<cv::KeyPoint> keypoints1;
-pipeline("monalisa.jpg", keypoints1)
+pipeline("monalisa.jpg")
     | save("monalise-descriptors.jpg") | noverify;
 
-std::vector<cv::KeyPoint> keypoints2;
-pipeline("da_vinci_human11.jpg", keypoints2)
+pipeline("da_vinci_human11.jpg")
     | save("da_vinci_human11-descriptors.jpg") | noverify;
 ```

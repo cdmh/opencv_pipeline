@@ -1,7 +1,6 @@
 #pragma once
 
 #include "exceptions.h"
-#include "detail.inl"
 #include <functional>
 
 namespace cv_pipeline {
@@ -21,27 +20,19 @@ cv::Mat load(std::string const &pathname)
 }
 
 // save an image
-inline
 std::function<cv::Mat (cv::Mat const &)>
-save(char const * const pathname)
-{
-    return std::bind(detail::save, pathname, std::placeholders::_1);
-}
+save(char const * const pathname);
 
-// save an image
-inline
+// detect keypoint features
 std::function<cv::Mat (cv::Mat const &)>
-detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
-{
-    return std::bind(detail::detect, detector, std::ref(keypoints), std::placeholders::_1);
-}
+detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
 
-inline
+// detect region features
 std::function<cv::Mat (cv::Mat const &)>
-extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
-{
-    return std::bind(detail::extract, detector, std::ref(keypoints), std::placeholders::_1);
-}
+detect(char const * const detector, std::vector<std::vector<cv::Point>> &regions);
+
+std::function<cv::Mat (cv::Mat const &)>
+extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
 
 inline
 cv::Mat grey(cv::Mat image)
@@ -103,6 +94,48 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
     if (verify  &&  image.empty())
         throw exceptions::bad_image();
     return image;
+}
+
+}   // namespace cv_pipeline
+
+#include "detail.inl"
+
+
+namespace cv_pipeline {
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
+{
+    return std::bind(detail::detect_keypoints, detector, std::ref(keypoints), std::placeholders::_1);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+detect(char const * const detector, std::vector<std::vector<cv::Point>> &regions)
+{
+    return std::bind(detail::detect_regions, detector, std::ref(regions), std::placeholders::_1);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
+{
+    return std::bind(detail::extract_keypoints, detector, std::ref(keypoints), std::placeholders::_1);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+extract(char const * const detector, std::vector<std::vector<cv::Point>> &regions)
+{
+    return std::bind(detail::extract_regions, detector, std::ref(regions), std::placeholders::_1);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+save(char const * const pathname)
+{
+    return std::bind(detail::save, pathname, std::placeholders::_1);
 }
 
 }   // namespace cv_pipeline
