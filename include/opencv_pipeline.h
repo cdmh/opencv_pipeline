@@ -35,11 +35,17 @@ std::function<cv::Mat (cv::Mat const &)>
 extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
 
 inline
-cv::Mat grey(cv::Mat image)
+cv::Mat gray(cv::Mat image)
 {
     cvtColor(image, image, cv::COLOR_BGR2GRAY);
     cvtColor(image, image, cv::COLOR_GRAY2BGR);
     return image;
+}
+
+inline
+cv::Mat grey(cv::Mat image)
+{
+    return gray(image);
 }
 
 inline

@@ -11,7 +11,7 @@ void detect_features()
 
     std::vector<cv::KeyPoint> keypoints;
     "monalisa.jpg" | verify
-        | grey
+        | gray
         | detect("HARRIS", keypoints)
         | extract("SIFT", keypoints);
 
@@ -29,9 +29,9 @@ void pipelines_without_assignment()
     using namespace cv_pipeline;
 
     test_file | verify;
-    test_file | verify | grey | verify | mirror | save("result.png");
-    test_file | verify | grey | mirror | save("result.png") | verify;
-    std::string(test_file) | verify | grey | mirror | save("result.png") | noverify;
+    test_file | verify | gray | verify | mirror | save("result.png");
+    test_file | verify | gray | mirror | save("result.png") | verify;
+    std::string(test_file) | verify | gray | mirror | save("result.png") | noverify;
 }
 
 void reuse_pipeline()
@@ -40,14 +40,14 @@ void reuse_pipeline()
 
     auto pipeline = [](char const * const filename)->cv::Mat {
             std::vector<cv::KeyPoint> keypoints;
-            return filename| verify | grey | mirror;
+            return filename| verify | gray | mirror;
         };
 
     pipeline("monalisa.jpg")
-        | save("monalise-grey-mirror.png") | noverify;
+        | save("monalise-gray-mirror.png") | noverify;
 
     pipeline("da_vinci_human11.jpg")
-        | save("da_vinci_human11-grey-mirror.png") | noverify;
+        | save("da_vinci_human11-gray-mirror.png") | noverify;
 }
 
 void exhaustive()
@@ -55,9 +55,9 @@ void exhaustive()
     using namespace cv_pipeline;
 
     // loading an image
-    cv::Mat img = cv::imread(test_file) | mirror | grey;
-    img = load(test_file) | grey | mirror;
-    img = test_file | verify | grey | mirror;
+    cv::Mat img = cv::imread(test_file) | mirror | gray;
+    img = load(test_file) | gray | mirror;
+    img = test_file | verify | gray | mirror;
 
     pipelines_without_assignment();
     detect_features();

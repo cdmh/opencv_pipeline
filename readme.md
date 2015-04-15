@@ -20,7 +20,7 @@ cv::flip(img, img, 1);
 when you can write this:
 ```cpp
 using namespace cv_pipeline;
-cv::Mat img = "monalisa.jpg" | verify | grey | mirror;
+cv::Mat img = "monalisa.jpg" | verify | gray | mirror;
 ```
 
 Principles
@@ -33,18 +33,18 @@ Principles
 Lightweight
 -----------
 
-*OpenCV Pipeline* is designed to be lightweight and expression (somewhat functional). To change an image to grey scale, reflect it horizontally and save it back out, simply write:
+*OpenCV Pipeline* is designed to be lightweight and expression (somewhat functional). To change an image to gray scale, reflect it horizontally and save it back out, simply write:
 
 ```cpp
 using namespace opencv_pipeline;
-"colour.png" | verify | grey | mirror | save("result.png");
+"colour.png" | verify | gray | mirror | save("result.png");
 ```
 
 That's all there is to it. No fuss, no variables, just a simple pipeline of actions. If you want a copy of the result for further processing, assign the expression to a variable:
 
 ```cpp
 using namespace opencv_pipeline;
-auto grey_mirror = "colour.png" | verify | grey | mirror | save("result.png");
+auto gray_mirror = "colour.png" | verify | gray | mirror | save("result.png");
 ```
 
 Safe
@@ -55,15 +55,15 @@ Inline verification is always available. Added `verify` at any point in the pipe
 It is mandatory to be explicit about error checking when loading an image within a pipeline. If you really want to avoid it, you can use `noverify`, but this is generally discouraged:
 
 ```cpp
-auto image = "colour.png" | noverify | grey;
+auto image = "colour.png" | noverify | gray;
 ```
 
-If the image load fails, and `noverify` is specified, then an empty image is passed to the next function in the pipeline. In this case, `grey` which calls OpenCV's `cvtColor` which will fail. If you are in exception free, then split the pipeline and use `noverify`:
+If the image load fails, and `noverify` is specified, then an empty image is passed to the next function in the pipeline. In this case, `gray` which calls OpenCV's `cvtColor` which will fail. If you are in exception free, then split the pipeline and use `noverify`:
 
 ```cpp
     auto image = "colour.png" | noverify;
     if (!image.empty())
-        image = image | grey;
+        image = image | gray;
 ```
 
 Efficient
@@ -77,12 +77,12 @@ Examples
 Extracting Features from Keypoints
 ----------------------------------
 
-Load a picture of the Mona Lisa, change it to grey scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
+Load a picture of the Mona Lisa, change it to gray scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
 ```cpp
 using namespace opencv_pipeline;
 std::vector<cv::KeyPoint> keypoints;
 "monalisa.jpg" | verify
-    | grey
+    | gray
     | detect("HARRIS", keypoints) | extract("SIFT", keypoints)
     | save("result.png") | noverify;
 ```
@@ -109,7 +109,7 @@ auto pipeline = [](char const * const filename)->cv::Mat {
     std::vector<cv::KeyPoint> keypoints;
     return
     filename| verify
-        | grey
+        | gray
         | detect("HARRIS", keypoints)
         | extract("SIFT", keypoints);
 };
