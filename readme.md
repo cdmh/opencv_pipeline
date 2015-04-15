@@ -81,7 +81,10 @@ Load a picture of the Mona Lisa, change it to grey scale, detect Harris Corner f
 ```cpp
 using namespace opencv_pipeline;
 std::vector<cv::KeyPoint> keypoints;
-"monalisa.jpg" | verify | grey | detect("HARRIS", keypoints) | extract("SIFT", keypoints) | save("result.png") | noverify;
+"monalisa.jpg" | verify
+    | grey
+    | detect("HARRIS", keypoints) | extract("SIFT", keypoints)
+    | save("result.png") | noverify;
 ```
 
 Extracting  Features from Regions
@@ -112,7 +115,7 @@ auto pipeline = [](char const * const filename)->cv::Mat {
 };
 
 pipeline("monalisa.jpg")
-    | save("monalise-descriptors.jpg") | noverify;
+    | save("monalisa-descriptors.jpg") | noverify;
 
 pipeline("da_vinci_human11.jpg")
     | save("da_vinci_human11-descriptors.jpg") | noverify;
