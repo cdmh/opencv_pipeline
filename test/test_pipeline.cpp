@@ -50,9 +50,33 @@ void reuse_pipeline()
         | save("da_vinci_human11-gray-mirror.png") | noverify;
 }
 
+cv::Mat imshow(const std::string& winname, cv::Mat image)
+{
+    cv::imshow(winname, image);
+    if (cv::waitKey(cvRound(1000.0/25.0)) == 27)
+    {
+        cvDestroyWindow(winname.c_str());
+        throw cv_pipeline::exceptions::end_of_file();
+    }
+    return image;
+}
+
+void play_grey_video()
+{
+    using namespace cv_pipeline;
+    video("../../../../../test data/videos/originals/frame_counter.3gp")
+        | grey
+        | mirror
+        | std::bind(imshow, "player", std::placeholders::_1)
+        | play;
+    cvDestroyAllWindows();
+}
+
 void exhaustive()
 {
     using namespace cv_pipeline;
+
+    play_grey_video();
 
     // loading an image
     cv::Mat img = cv::imread(test_file) | mirror | gray;

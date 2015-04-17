@@ -103,7 +103,7 @@ cv::Mat operator|(char const * const pathname, verify_result verify)
 {
     cv::Mat image = load(pathname);
     if (verify  &&  image.empty())
-        throw exceptions::image_not_found(pathname);
+        throw exceptions::file_not_found(pathname);
     return image;
 }
 
@@ -112,7 +112,7 @@ cv::Mat operator|(std::string const pathname, verify_result verify)
 {
     cv::Mat image = load(pathname);
     if (verify  &&  image.empty())
-        throw exceptions::image_not_found(pathname.c_str());
+        throw exceptions::file_not_found(pathname.c_str());
     return image;
 }
 
@@ -123,6 +123,100 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
     if (verify  &&  image.empty())
         throw exceptions::bad_image();
     return image;
+}
+
+
+
+class video_pipeline
+{
+  public:
+    video_pipeline(char const * const pathname)
+    {
+        capture_.open(pathname);
+    }
+
+    cv::Mat run()
+    {
+        cv::Mat image;
+        capture_ >> image;
+        if (image.empty())
+            throw exceptions::end_of_file();
+        return image;
+    }
+
+    video_pipeline(video_pipeline const &)           = delete;
+    video_pipeline &operator=(video_pipeline const &) = delete;
+
+    cv::VideoCapture &capture() { return capture_; }
+
+  private:
+    cv::VideoCapture capture_;
+};
+
+inline
+video_pipeline
+video(char const * const pathname)
+{
+    return video_pipeline(pathname);
+}
+
+template<typename LHS, typename RHS>
+class chain_link
+{
+  public:
+    chain_link(LHS &left, RHS &right) : lhs(left), rhs(right)
+    {
+    }
+
+    cv::Mat run()
+    {
+        return rhs(lhs.run());
+    }
+
+  private:
+    LHS lhs;
+    RHS rhs;
+};
+
+chain_link<
+    video_pipeline &,
+    std::function<cv::Mat (cv::Mat)>>
+operator|(
+    video_pipeline &lhs,
+    std::function<cv::Mat (cv::Mat)> rhs)
+{
+    return {lhs,rhs};
+}
+
+template<typename LHS, typename RHS>
+chain_link<
+    chain_link<LHS, RHS>,
+    std::function<cv::Mat (cv::Mat)>>
+operator|(
+    chain_link<LHS, RHS>             lhs, 
+    std::function<cv::Mat (cv::Mat)> rhs)
+{
+    return {lhs, rhs};
+}
+
+typedef
+enum { play }
+terminator;
+
+template<typename LHS, typename RHS>
+bool const
+operator|(chain_link<LHS, RHS> lhs, terminator)
+{
+    try
+    {
+        while (1)
+            lhs.run();
+    }
+    catch (exceptions::end_of_file &)
+    {
+        return true;
+    }
+    return false;
 }
 
 }   // namespace cv_pipeline
