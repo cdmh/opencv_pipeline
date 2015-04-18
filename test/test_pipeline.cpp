@@ -76,6 +76,14 @@ void exhaustive()
 {
     using namespace cv_pipeline;
 
+#if 0
+    // test webcam
+    camera(0)
+        | grey
+        | std::bind(imshow, "player", std::placeholders::_1)
+        | play;
+#endif
+
     play_grey_video();
 
     // loading an image

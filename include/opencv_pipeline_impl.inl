@@ -130,9 +130,19 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
 class video_pipeline
 {
   public:
-    video_pipeline(char const * const pathname)
+    video_pipeline(int device)
     {
-        capture_.open(pathname);
+       capture_.open(device);
+    }
+
+    video_pipeline(std::string const &pathname)
+    {
+       capture_.open(pathname);
+    }
+
+    video_pipeline(char const * const pathname)
+      : video_pipeline(std::string(pathname))
+    {
     }
 
     cv::Mat run()
@@ -144,15 +154,16 @@ class video_pipeline
         return image;
     }
 
-    video_pipeline(video_pipeline const &)           = delete;
+    video_pipeline(video_pipeline &&)                 = delete;
+    video_pipeline &operator=(video_pipeline &&)      = delete;
+    video_pipeline(video_pipeline const &)            = delete;
     video_pipeline &operator=(video_pipeline const &) = delete;
-
-    cv::VideoCapture &capture() { return capture_; }
 
   private:
     cv::VideoCapture capture_;
 };
 
+// capture video from a file
 inline
 video_pipeline
 video(char const * const pathname)
@@ -160,25 +171,24 @@ video(char const * const pathname)
     return video_pipeline(pathname);
 }
 
-template<typename LHS, typename RHS>
-class chain_link
+// capture video from a file
+inline
+video_pipeline
+video(std::string const pathname)
 {
-  public:
-    chain_link(LHS &left, RHS &right) : lhs(left), rhs(right)
-    {
-    }
+    return video_pipeline(pathname);
+}
 
-    cv::Mat run()
-    {
-        return rhs(lhs.run());
-    }
+// capture video from a camera device
+inline
+video_pipeline
+camera(int device)
+{
+    return video_pipeline(device);
+}
 
-  private:
-    LHS lhs;
-    RHS rhs;
-};
-
-chain_link<
+inline
+std::pair<
     video_pipeline &,
     std::function<cv::Mat (cv::Mat)>>
 operator|(
@@ -189,11 +199,11 @@ operator|(
 }
 
 template<typename LHS, typename RHS>
-chain_link<
-    chain_link<LHS, RHS>,
+std::pair<
+    std::pair<LHS, RHS>,
     std::function<cv::Mat (cv::Mat)>>
 operator|(
-    chain_link<LHS, RHS>             lhs, 
+    std::pair<LHS, RHS>              lhs, 
     std::function<cv::Mat (cv::Mat)> rhs)
 {
     return {lhs, rhs};
@@ -204,13 +214,24 @@ enum { play }
 terminator;
 
 template<typename LHS, typename RHS>
+cv::Mat run(std::pair<LHS, RHS> chain)
+{
+    return chain.second(run(chain.first));
+}
+
+cv::Mat run(video_pipeline &pipeline)
+{
+    return pipeline.run();
+}
+
+template<typename LHS, typename RHS>
 bool const
-operator|(chain_link<LHS, RHS> lhs, terminator)
+operator|(std::pair<LHS, RHS> lhs, terminator)
 {
     try
     {
         while (1)
-            lhs.run();
+            run(lhs);
     }
     catch (exceptions::end_of_file &)
     {
