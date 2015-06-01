@@ -56,7 +56,7 @@ cv::Mat detect_regions(
     cv::Mat mask;
 
     if (detector_class == "MSER")
-        image |= gray;
+        image = image | gray;
     else if (detector_class != "MSCR")
         throw exceptions::bad_image();
 
