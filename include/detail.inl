@@ -56,11 +56,7 @@ cv::Mat detect_regions(
     cv::Mat mask;
 
     if (detector_class == "MSER")
-    {
-        // we want a single channel grey scale image, so we dont use
-        // image = image | grey
-        cvtColor(image, image, CV_BGR2GRAY);
-    }
+        image |= gray;
     else if (detector_class != "MSCR")
         throw exceptions::bad_image();
 

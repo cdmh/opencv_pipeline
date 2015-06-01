@@ -49,30 +49,6 @@ extract(char const * const detector, std::vector<std::vector<cv::Point>> &region
     return std::bind(detail::extract_regions, detector, std::ref(regions), std::placeholders::_1);
 }
 
-//
-// image manipulation
-//
-
-inline
-cv::Mat gray(cv::Mat image)
-{
-    cvtColor(image, image, cv::COLOR_BGR2GRAY);
-    cvtColor(image, image, cv::COLOR_GRAY2BGR);
-    return image;
-}
-
-inline
-cv::Mat grey(cv::Mat image)
-{
-    return gray(image);
-}
-
-inline
-cv::Mat mirror(cv::Mat image)
-{
-    flip(image, image, 1);
-    return image;
-}
 
 //
 // operators -- these are not forward referenced in the
@@ -122,6 +98,32 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
 {
     if (verify  &&  image.empty())
         throw exceptions::bad_image();
+    return image;
+}
+
+
+//
+// image manipulation
+//
+
+inline
+cv::Mat gray(cv::Mat image)
+{
+    cvtColor(image, image, cv::COLOR_BGR2GRAY);
+    return image;
+}
+
+inline
+cv::Mat gray_bgr(cv::Mat image)
+{
+    cvtColor(image | gray, image, cv::COLOR_GRAY2BGR);
+    return image;
+}
+
+inline
+cv::Mat mirror(cv::Mat image)
+{
+    flip(image, image, 1);
     return image;
 }
 
