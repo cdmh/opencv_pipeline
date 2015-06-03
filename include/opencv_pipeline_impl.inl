@@ -22,6 +22,15 @@ save(char const * const pathname)
 }
 
 inline
+cv::Rect roi(cv::Mat const &image)
+{
+    cv::Point tl;
+    cv::Size  size;
+    image.locateROI(size, tl);
+    return cv::Rect(tl, size);
+}
+
+inline
 std::function<cv::Mat (cv::Mat const &)>
 detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
 {
@@ -70,6 +79,13 @@ cv::Mat operator|(cv::Mat const &left, std::function<cv::Mat(cv::Mat const &)> r
     return right(left);
 }
 
+// some OpenCV functions return MatExpr
+inline
+cv::Mat operator|(cv::Mat const &left, cv::MatExpr(*right)(cv::Mat const &))
+{
+    return right(left);
+}
+
 // load an image with optional verification.
 // whether or not to verify is compulsory -- verify or noverify must
 // go between a load and any subsequent manipulations through the
@@ -107,24 +123,87 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
 //
 
 inline
-cv::Mat gray(cv::Mat image)
+std::function<cv::Mat (cv::Mat const &)>
+color_space(int code)
 {
-    cvtColor(image, image, cv::COLOR_BGR2GRAY);
-    return image;
+    using namespace std::placeholders;
+    return std::bind(detail::color_space, _1, code);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+convert(int type)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::convert, _1, type);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+dilate(int dx, int dy)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::dilate, _1, dx, dy);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+erode(int dx, int dy)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::erode, _1, dx, dy);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+gaussian_blur(int dx, int dy, double sigmaX=0.0, double sigmaY=0.0, int border=cv::BORDER_DEFAULT)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::gaussian_blur, _1, dx, dy, sigmaX, sigmaY, border);
+}
+
+inline
+cv::Mat gray(cv::Mat const &image)
+{
+    return image | color_space(cv::COLOR_BGR2GRAY);
 }
 
 inline
 cv::Mat gray_bgr(cv::Mat image)
 {
-    cvtColor(image | gray, image, cv::COLOR_GRAY2BGR);
-    return image;
+    return image | gray | color_space(cv::COLOR_GRAY2BGR);
 }
 
 inline
-cv::Mat mirror(cv::Mat image)
+cv::Mat mirror(cv::Mat const &image)
 {
-    flip(image, image, 1);
-    return image;
+    cv::Mat dst;
+    flip(image, dst, 1);
+    return dst;
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+sobel(int dx, int dy, int ksize=3, double scale=1, double delta=0, int border=cv::BORDER_DEFAULT)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::sobel, _1, dx, dy, ksize, scale, delta, border);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+subtract(cv::Mat const &other)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::subtract, _1, other);
+}
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OTSU)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::threshold, _1, thresh, maxval, type);
 }
 
 
@@ -192,10 +271,10 @@ camera(int device)
 inline
 std::pair<
     video_pipeline &,
-    std::function<cv::Mat (cv::Mat)>>
+    std::function<cv::Mat (cv::Mat const &)>>
 operator|(
     video_pipeline &lhs,
-    std::function<cv::Mat (cv::Mat)> rhs)
+    std::function<cv::Mat (cv::Mat const &)> rhs)
 {
     return {lhs,rhs};
 }
@@ -203,10 +282,21 @@ operator|(
 template<typename LHS, typename RHS>
 std::pair<
     std::pair<LHS, RHS>,
-    std::function<cv::Mat (cv::Mat)>>
+    std::function<cv::Mat (cv::Mat const &)>>
 operator|(
-    std::pair<LHS, RHS>              lhs, 
-    std::function<cv::Mat (cv::Mat)> rhs)
+    std::pair<LHS, RHS> lhs, 
+    std::function<cv::Mat (cv::Mat const &)> rhs)
+{
+    return {lhs, rhs};
+}
+
+template<typename LHS, typename RHS>
+std::pair<
+    std::pair<LHS, RHS>,
+    std::function<cv::Mat (cv::Mat const &)>>
+operator|(
+    std::pair<LHS, RHS> lhs, 
+    cv::Mat(*rhs)(cv::Mat const &))
 {
     return {lhs, rhs};
 }

@@ -8,6 +8,16 @@ namespace cv_pipeline {
 
 namespace detail {
 
+cv::Mat convert(cv::Mat const &image, int type);
+cv::Mat color_space(cv::Mat const &image, int code);
+cv::Mat convert(cv::Mat const &image, int type);
+cv::Mat dilate(cv::Mat const &image, int dx, int dy);
+cv::Mat erode(cv::Mat const &image, int dx, int dy);
+cv::Mat gaussian_blur(cv::Mat const &image, int dx, int dy, double sigmaX, double sigmaY, int border);
+cv::Mat sobel(cv::Mat const &image, int dx, int dy, int ksize, double scale, double delta, int border);
+cv::Mat subtract(cv::Mat const &image1, cv::Mat const &image2);
+cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type);
+
 std::vector<cv::KeyPoint>
 to_keypoints(std::vector<std::vector<cv::Point>> const &regions);
 

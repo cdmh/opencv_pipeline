@@ -9,6 +9,90 @@ namespace cv_pipeline {
 namespace detail {
 
 inline
+cv::Mat color_space(cv::Mat const &image, int code)
+{
+    cv::Mat dst;
+    cv::cvtColor(image, dst, code);
+    return dst;
+}
+
+inline
+cv::Mat convert(cv::Mat const &image, int type)
+{
+    if (image.type() == type)
+        return image;
+
+    cv::Mat dst;
+    image.convertTo(dst, type);
+    return dst;
+}
+
+inline
+cv::Mat dilate(cv::Mat const &image, int dx, int dy)
+{
+    cv::Mat dst;
+    cv::Mat kernel = getStructuringElement(cv::MORPH_RECT, cv::Size(dx, dy));
+    dilate(image, dst, kernel);
+    return dst;
+}
+
+inline
+cv::Mat erode(cv::Mat const &image, int dx, int dy)
+{
+    cv::Mat dst;
+    cv::Mat kernel = getStructuringElement(cv::MORPH_RECT, cv::Size(dx, dy));
+    erode(image, dst, kernel);
+    return dst;
+}
+
+inline
+cv::Mat gaussian_blur(cv::Mat const &image, int dx, int dy, double sigmaX, double sigmaY, int border)
+{
+    cv::Mat dst;
+    if (image.depth() != CV_64F)
+        image.convertTo(dst, CV_MAKETYPE(CV_64F,image.channels()));
+    else
+        dst = image;
+
+    // apply Gaussian Blur using 64-bit floating point to maintain precision
+    cv::GaussianBlur(dst, dst, cv::Size(dx, dy), sigmaX, sigmaY, border);
+
+    if (image.depth() != CV_64F)
+        dst.convertTo(dst, image.type());
+    return dst;
+}
+
+inline
+cv::Mat sobel(cv::Mat const &image, int dx, int dy, int ksize, double scale, double delta, int border)
+{
+    cv::Mat dst;
+    cv::Sobel(image, dst, image.depth(), dx, dy, ksize, scale, delta, border);
+#ifndef NDEBUG
+    cv::Mat s1; 
+    image.convertTo(s1, CV_8UC1);
+    cv::Mat d1; 
+    dst.convertTo(d1, CV_8UC1);
+#endif
+    return dst;
+}
+
+inline
+cv::Mat subtract(cv::Mat const &image1, cv::Mat const &image2)
+{
+    return image1 - image2;
+}
+
+inline
+cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type)
+{
+    cv::Mat dst;
+    cv::threshold(image, dst, thresh, maxval, type);
+    return dst;
+}
+
+
+
+inline
 std::vector<cv::KeyPoint>
 to_keypoints(std::vector<std::vector<cv::Point>> const &regions)
 {
@@ -23,8 +107,6 @@ to_keypoints(std::vector<std::vector<cv::Point>> const &regions)
     assert(keypoints.size() == regions.size());
     return keypoints;
 }
-
-
 
 inline
 cv::Mat detect_keypoints(
@@ -93,7 +175,7 @@ cv::Mat extract_regions(
 inline
 cv::Mat save(char const * const pathname, cv::Mat const &image)
 {
-    return cv::imwrite(pathname, image)? image : cv::Mat();
+    return imwrite(pathname, image)? image : cv::Mat();
 }
 
 }   // namespace detail
