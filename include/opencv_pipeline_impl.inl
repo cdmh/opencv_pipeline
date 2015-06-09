@@ -169,6 +169,15 @@ cv::Mat gray(cv::Mat const &image)
 }
 
 inline
+cv::Mat equalize_hist(cv::Mat image)
+{
+    cv::equalizeHist(image, image);
+    return image;
+}
+
+
+
+inline
 cv::Mat gray_bgr(cv::Mat image)
 {
     return image | gray | color_space(cv::COLOR_GRAY2BGR);
@@ -316,6 +325,8 @@ cv::Mat run(video_pipeline &pipeline)
     return pipeline.run();
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4127)  // C4127 conditional expression is constant
 template<typename LHS, typename RHS>
 bool const
 operator|(std::pair<LHS, RHS> lhs, terminator)
@@ -331,5 +342,6 @@ operator|(std::pair<LHS, RHS> lhs, terminator)
     }
     return false;
 }
+#pragma warning(pop)
 
 }   // namespace cv_pipeline

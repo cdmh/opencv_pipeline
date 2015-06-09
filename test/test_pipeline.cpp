@@ -54,7 +54,7 @@ void reuse_pipeline()
         | save("da_vinci_human11-gray_bgr-mirror.png") | noverify;
 }
 
-cv::Mat imshow(const std::string& winname, cv::Mat image)
+cv::Mat imshow(std::string const &winname, cv::Mat image)
 {
     cv::imshow(winname, image);
     if (cv::waitKey(cvRound(1000.0/25.0)) == 27)
@@ -68,8 +68,8 @@ cv::Mat imshow(const std::string& winname, cv::Mat image)
 void play_grey_video()
 {
     using namespace cv_pipeline;
-    video("../../../../../test data/videos/originals/frame_counter.3gp")
-        | gray_bgr
+    auto vid = video("../../../../test data/videos/originals/frame_counter.3gp");
+    vid | gray_bgr
         | mirror
         | std::bind(imshow, "player", std::placeholders::_1)
         | play;
@@ -98,9 +98,10 @@ void license_plate()
 {
     using namespace cv_pipeline;
 
-    char const * const filename = "../../../test data/images/vehicle-license-plate-recognition-algorithm-02.jpg";
+    char const * const filename = "../../../../test data/images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
     cv::Mat src = filename | verify | gray;// | convert(CV_64FC1);
+
     preprocess_license_plate(src);
     cv::Mat mask = preprocess_license_plate(src);
 
@@ -174,13 +175,10 @@ void license_plate()
             cv::Point2f vertices[4];
             box.points(vertices);
 
-            for(int i = 0; i < 4; ++i)
+            cv::Mat area = result(rect.boundingRect() & roi(result));
+            for (int i = 0; i < 4; ++i)
             {
-                line(
-                    result(rect.boundingRect() & roi(result)),
-                    vertices[i],
-                    vertices[(i + 1) % 4],
-                    cv::Scalar(255, 255, 0));
+                line(area, vertices[i], vertices[(i + 1) % 4], cv::Scalar(255, 255, 0));
             }
         }
     }
@@ -224,7 +222,7 @@ void exhaustive()
 
 
 extern "C" int __stdcall IsDebuggerPresent(void);
-int main(int argc, char *argv[])
+int main(int /*argc*/, char * /*argv*/[])
 {
 #ifdef _MSC_VER
     // Microsoft Compiler/Debugger help

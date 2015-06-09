@@ -147,17 +147,53 @@ cv::Mat detect_regions(
     return image;
 }
 
+// copy each descriptor in turn, skipping ones without a keypoint
+inline
+void copy_keypoint_descriptors(
+    cv::Mat                   const &src,
+    std::vector<cv::KeyPoint> const &src_kps,
+    cv::Mat                         &dst,
+    std::vector<cv::KeyPoint> const &dst_kps)
+{
+    assert(src.type() == dst.type());
+    assert(src_kps.size() < dst_kps.size());
+    assert(src_kps.size() == (size_t)src.rows);
+    assert(dst_kps.size() == (size_t)dst.rows);
+
+    int const elem_size = CV_ELEM_SIZE(src.type());
+    int const width     = src.cols * elem_size;
+    for (int d=0, s=0; s<src_kps.size(); ++d)
+    {
+        if (src_kps[s].pt == dst_kps[d].pt)
+        {
+            std::copy_n(src.ptr(s), width, dst.ptr(d));
+            ++s;
+        }
+    }
+}
+
 inline
 cv::Mat extract_keypoints(
-    char const *        const  extractor_class,
-    std::vector<cv::KeyPoint> &keypoints,
-    cv::Mat             const &image)
+    char const *              const  extractor_class,
+    std::vector<cv::KeyPoint> const &keypoints,
+    cv::Mat                   const &image)
 {
     auto extractor = cv::DescriptorExtractor::create(extractor_class);
 
     cv::Mat descriptors;
-    extractor->compute(image, keypoints, descriptors);
-    return descriptors;
+    std::vector<cv::KeyPoint> kps(keypoints);
+    extractor->compute(image, kps, descriptors);
+
+    if (kps.size() == keypoints.size())
+        return descriptors;
+
+    // if the extractor has removed any keypoints, then we have
+    // to copy each descriptor in turn, skipping the descriptor without
+    // a keypoint. this will result in a descriptor with zero data in
+    // the descriptor
+    cv::Mat new_descriptors = cv::Mat::zeros(int(keypoints.size()), descriptors.cols, descriptors.type());
+    copy_keypoint_descriptors(descriptors, kps, new_descriptors, keypoints);
+    return new_descriptors;
 }
 
 inline
@@ -166,10 +202,7 @@ cv::Mat extract_regions(
     std::vector<std::vector<cv::Point>> &regions,
     cv::Mat                       const &image)
 {
-    return extract_keypoints(
-        extractor_class,
-        to_keypoints(regions),
-        image);
+    return extract_keypoints(extractor_class, to_keypoints(regions), image);
 }
 
 inline
