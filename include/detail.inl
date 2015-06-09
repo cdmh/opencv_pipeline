@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace cv_pipeline {
+namespace opencv_pipeline {
 
 namespace detail {
 
@@ -162,7 +162,7 @@ void copy_keypoint_descriptors(
 
     int const elem_size = CV_ELEM_SIZE(src.type());
     int const width     = src.cols * elem_size;
-    for (int d=0, s=0; s<src_kps.size(); ++d)
+    for (int d=0, s=0; s<int(src_kps.size()); ++d)
     {
         if (src_kps[s].pt == dst_kps[d].pt)
         {
@@ -213,4 +213,4 @@ cv::Mat save(char const * const pathname, cv::Mat const &image)
 
 }   // namespace detail
 
-}   // namespace cv_pipeline
+}   // namespace opencv_pipeline

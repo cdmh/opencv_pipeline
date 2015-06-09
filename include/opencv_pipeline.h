@@ -3,7 +3,7 @@
 #include "exceptions.h"
 #include <functional>
 
-namespace cv_pipeline {
+namespace opencv_pipeline {
 
 typedef
 enum { noverify=false, verify=true }
@@ -34,7 +34,7 @@ cv::Mat gray(cv::Mat image);        // single channel grey-scale image
 cv::Mat gray_bgr(cv::Mat image);    // 3-channel grey-scale image
 cv::Mat mirror(cv::Mat image);
 
-}   // namespace cv_pipeline
+}   // namespace opencv_pipeline
 
 #include "detail.h"
 #include "opencv_pipeline_impl.inl"

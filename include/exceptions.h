@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace cv_pipeline {
+namespace opencv_pipeline {
 
 namespace exceptions {
 
@@ -34,4 +34,4 @@ class end_of_file : public std::exception
 
 }   // namespace exceptions
 
-}   // namespace cv_pipeline
+}   // namespace opencv_pipeline

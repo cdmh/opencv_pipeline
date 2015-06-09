@@ -7,7 +7,7 @@ char const * const test_file = "monalisa.jpg";
 
 void detect_features()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
 
     std::vector<cv::KeyPoint> keypoints;
     "monalisa.jpg" | verify
@@ -30,7 +30,7 @@ void detect_features()
 
 void pipelines_without_assignment()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
 
     test_file | verify;
     test_file | verify | gray_bgr | verify | mirror | save("result.png");
@@ -40,7 +40,7 @@ void pipelines_without_assignment()
 
 void reuse_pipeline()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
 
     auto pipeline = [](char const * const filename)->cv::Mat {
             std::vector<cv::KeyPoint> keypoints;
@@ -60,14 +60,14 @@ cv::Mat imshow(std::string const &winname, cv::Mat image)
     if (cv::waitKey(cvRound(1000.0/25.0)) == 27)
     {
         cvDestroyWindow(winname.c_str());
-        throw cv_pipeline::exceptions::end_of_file();
+        throw opencv_pipeline::exceptions::end_of_file();
     }
     return image;
 }
 
 void play_grey_video()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
     auto vid = video("../../../../test data/videos/originals/frame_counter.3gp");
     vid | gray_bgr
         | mirror
@@ -80,7 +80,7 @@ void play_grey_video()
 // http://rnd.azoft.com/instant-license-plate-recognition-in-ios-apps/
 cv::Mat preprocess_license_plate(cv::Mat const &src)
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
     return src
          | dilate(3, 9)                          // close & subtract
          | erode(3, 9)
@@ -96,7 +96,7 @@ cv::Mat preprocess_license_plate(cv::Mat const &src)
 
 void license_plate()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
 
     char const * const filename = "../../../../test data/images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
@@ -186,7 +186,7 @@ void license_plate()
 
 void exhaustive()
 {
-    using namespace cv_pipeline;
+    using namespace opencv_pipeline;
 
     try
     {

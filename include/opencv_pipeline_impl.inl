@@ -1,6 +1,6 @@
 #pragma once
 
-namespace cv_pipeline {
+namespace opencv_pipeline {
 
 inline
 cv::Mat load(char const * const pathname)
@@ -344,4 +344,4 @@ operator|(std::pair<LHS, RHS> lhs, terminator)
 }
 #pragma warning(pop)
 
-}   // namespace cv_pipeline
+}   // namespace opencv_pipeline

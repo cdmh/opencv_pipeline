@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace cv_pipeline {
+namespace opencv_pipeline {
 
 namespace detail {
 
@@ -45,4 +45,4 @@ cv::Mat save(char const * const pathname, cv::Mat const &image);
 
 }   // namespace detail
 
-}   // namespace cv_pipeline
+}   // namespace opencv_pipeline
