@@ -54,12 +54,12 @@ void reuse_pipeline()
         | save("da_vinci_human11-gray_bgr-mirror.png") | noverify;
 }
 
-cv::Mat imshow(std::string const &winname, cv::Mat image)
+cv::Mat imshow(char const * const winname, cv::Mat const &image)
 {
     cv::imshow(winname, image);
     if (cv::waitKey(cvRound(1000.0/25.0)) == 27)
     {
-        cvDestroyWindow(winname.c_str());
+        cvDestroyWindow(winname);
         throw opencv_pipeline::exceptions::end_of_file();
     }
     return image;
@@ -70,8 +70,8 @@ void play_grey_video()
     using namespace opencv_pipeline;
     auto vid = video("../../../../test data/videos/originals/frame_counter.3gp");
     vid | gray_bgr
-        | mirror
-        | std::bind(imshow, "player", std::placeholders::_1)
+        | mirror    // !!! why is this explicit ctor needed ?
+        | std::function<cv::Mat (cv::Mat const &)>(std::bind(imshow, "player", std::placeholders::_1))
         | play;
     cvDestroyAllWindows();
 }
@@ -100,7 +100,7 @@ void license_plate()
 
     char const * const filename = "../../../../test data/images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
-    cv::Mat src = filename | verify | gray;// | convert(CV_64FC1);
+    cv::Mat src = filename | verify | if_(channels(3), gray);// | convert(CV_64FC1);
 
     preprocess_license_plate(src);
     cv::Mat mask = preprocess_license_plate(src);

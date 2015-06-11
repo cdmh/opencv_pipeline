@@ -178,7 +178,7 @@ cv::Mat equalize_hist(cv::Mat image)
 
 
 inline
-cv::Mat gray_bgr(cv::Mat image)
+cv::Mat gray_bgr(cv::Mat const &image)
 {
     return image | gray | color_space(cv::COLOR_GRAY2BGR);
 }
@@ -214,6 +214,35 @@ threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OT
     using namespace std::placeholders;
     return std::bind(detail::threshold, _1, thresh, maxval, type);
 }
+
+
+//
+// conditions
+//
+
+inline
+std::function<cv::Mat (cv::Mat const &)>
+if_(
+    std::function<bool const (cv::Mat const &)> cond,
+    std::function<cv::Mat (cv::Mat const &)>    fn)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::if_, _1, cond, fn);
+}
+
+
+//
+// image attributes
+//
+
+inline
+std::function<bool const (cv::Mat const &)>
+channels(int num)
+{
+    using namespace std::placeholders;
+    return std::bind(detail::channels, _1, num);
+}
+
 
 
 
@@ -288,6 +317,17 @@ operator|(
     return {lhs,rhs};
 }
 
+inline
+std::pair<
+    video_pipeline &,
+    std::function<cv::Mat (cv::Mat const &)>>
+operator|(
+    video_pipeline &lhs,
+    cv::Mat (*rhs)(cv::Mat const &))
+{
+    return {lhs,rhs};
+}
+
 template<typename LHS, typename RHS>
 std::pair<
     std::pair<LHS, RHS>,
@@ -310,6 +350,28 @@ operator|(
     return {lhs, rhs};
 }
 
+template<typename LHS, typename RHS>
+std::pair<
+    std::pair<LHS, RHS>,
+    std::function<bool const (cv::Mat const &)>>
+operator|(
+    std::pair<LHS, RHS> lhs, 
+    std::function<bool const (cv::Mat const &)> rhs)
+{
+    return {lhs, rhs};
+}
+
+template<typename LHS, typename RHS>
+std::pair<
+    std::pair<LHS, RHS>,
+    std::function<bool const (cv::Mat const &)>>
+operator|(
+    std::pair<LHS, RHS> lhs, 
+    bool const(*rhs)(cv::Mat const &))
+{
+    return {lhs, rhs};
+}
+
 typedef
 enum { play }
 terminator;
@@ -320,6 +382,7 @@ cv::Mat run(std::pair<LHS, RHS> chain)
     return chain.second(run(chain.first));
 }
 
+inline
 cv::Mat run(video_pipeline &pipeline)
 {
     return pipeline.run();

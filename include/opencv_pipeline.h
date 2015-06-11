@@ -30,9 +30,9 @@ std::function<cv::Mat (cv::Mat const &)>
 extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
 
 // image manipulation
-cv::Mat gray(cv::Mat image);        // single channel grey-scale image
-cv::Mat gray_bgr(cv::Mat image);    // 3-channel grey-scale image
-cv::Mat mirror(cv::Mat image);
+cv::Mat gray(cv::Mat const &image);         // single channel grey-scale image
+cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
+cv::Mat mirror(cv::Mat const &image);
 
 }   // namespace opencv_pipeline
 

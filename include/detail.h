@@ -8,6 +8,7 @@ namespace opencv_pipeline {
 
 namespace detail {
 
+// manuipulation
 cv::Mat convert(cv::Mat const &image, int type);
 cv::Mat color_space(cv::Mat const &image, int code);
 cv::Mat convert(cv::Mat const &image, int type);
@@ -17,6 +18,15 @@ cv::Mat gaussian_blur(cv::Mat const &image, int dx, int dy, double sigmaX, doubl
 cv::Mat sobel(cv::Mat const &image, int dx, int dy, int ksize, double scale, double delta, int border);
 cv::Mat subtract(cv::Mat const &image1, cv::Mat const &image2);
 cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type);
+
+// conditions
+cv::Mat if_(
+    cv::Mat                              const &image,
+    std::function<bool const (cv::Mat const &)> cond,
+    std::function<cv::Mat (cv::Mat const &)>    fn);
+
+// attributes
+bool const channels(cv::Mat const &image, int num);
 
 std::vector<cv::KeyPoint>
 to_keypoints(std::vector<std::vector<cv::Point>> const &regions);

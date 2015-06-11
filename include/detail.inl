@@ -91,6 +91,30 @@ cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type)
 }
 
 
+//
+// conditions
+//
+
+inline
+cv::Mat if_(
+    cv::Mat                              const &image,
+    std::function<bool const (cv::Mat const &)> cond,
+    std::function<cv::Mat (cv::Mat const &)>    fn)
+{
+    return cond(image)? fn(image) : image;
+}
+
+
+//
+// image attributes
+//
+
+inline
+bool const channels(cv::Mat const &image, int num)
+{
+    return image.channels() == num;
+}
+
 
 inline
 std::vector<cv::KeyPoint>
