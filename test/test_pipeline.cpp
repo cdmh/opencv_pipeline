@@ -3,27 +3,28 @@
 
 namespace { // anonymous namespace
 
-char const * const test_file = "monalisa.jpg";
+#define TESTDATA_DIR "../../../../test data/"
+char const * const test_file = TESTDATA_DIR "images/monalisa.jpg";
 
 void detect_features()
 {
     using namespace opencv_pipeline;
 
     std::vector<cv::KeyPoint> keypoints;
-    "monalisa.jpg" | verify
+    test_file | verify
         | gray_bgr
         | detect("HARRIS", keypoints)
         | extract("SIFT", keypoints);
 
     std::vector<std::vector<cv::Point>> regions1;
     auto mscr_sift = 
-        "da_vinci_human11.jpg" | verify
+        test_file | verify
         | detect("MSCR", regions1)
         | extract("SIFT", regions1);
 
     std::vector<std::vector<cv::Point>> regions2;
     auto mser_sift =
-        "da_vinci_human11.jpg" | verify
+        test_file | verify
         | detect("MSER", regions2)
         | extract("SIFT", regions2);
 }
@@ -47,11 +48,11 @@ void reuse_pipeline()
             return filename| verify | gray_bgr | mirror;
         };
 
-    pipeline("monalisa.jpg")
-        | save("monalise-gray_bgr-mirror.png") | noverify;
+    pipeline(test_file)
+        | save("monalisa-gray_bgr-mirror.png") | noverify;
 
-    pipeline("da_vinci_human11.jpg")
-        | save("da_vinci_human11-gray_bgr-mirror.png") | noverify;
+    pipeline(TESTDATA_DIR "images/da_vinci_human11.jpg")
+        | save("da_vinci_human11-gray_bgr-mirror.png") | verify;
 }
 
 cv::Mat imshow(char const * const winname, cv::Mat const &image)
@@ -68,7 +69,7 @@ cv::Mat imshow(char const * const winname, cv::Mat const &image)
 void play_grey_video()
 {
     using namespace opencv_pipeline;
-    auto vid = video("../../../../test data/videos/originals/frame_counter.3gp");
+    auto vid = video(TESTDATA_DIR "videos/originals/frame_counter.3gp");
     auto show = std::bind(imshow, "player", std::placeholders::_1);
     vid | gray_bgr
         | mirror
@@ -99,7 +100,7 @@ void license_plate()
 {
     using namespace opencv_pipeline;
 
-    char const * const filename = "../../../../test data/images/vehicle-license-plate-recognition-algorithm-02.jpg";
+    char const * const filename = TESTDATA_DIR "images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
     cv::Mat src = filename | verify | if_(channels(3), gray);// | convert(CV_64FC1);
 
@@ -206,8 +207,6 @@ void exhaustive()
         | play;
 #endif
 
-    play_grey_video();
-
     // loading an image
     cv::Mat img = cv::imread(test_file) | verify | mirror;
     img = img | gray_bgr;
@@ -217,6 +216,8 @@ void exhaustive()
     pipelines_without_assignment();
     detect_features();
     reuse_pipeline();
+
+    play_grey_video();
 }
 
 }   // anonymous namespace
