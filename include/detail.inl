@@ -134,7 +134,7 @@ to_keypoints(std::vector<std::vector<cv::Point>> const &regions)
 
 inline
 cv::Mat detect_keypoints(
-    char const *        const  detector_class,
+    std::string         const &detector_class,
     std::vector<cv::KeyPoint> &keypoints,
     cv::Mat             const &image)
 {
@@ -145,7 +145,7 @@ cv::Mat detect_keypoints(
 
 inline
 cv::Mat detect_regions(
-    std::string                   const &detector_class,
+    std::string                   const &detector,
     std::vector<std::vector<cv::Point>> &regions,
     cv::Mat                              image)
 {
@@ -161,11 +161,13 @@ cv::Mat detect_regions(
     int     edge_blur_size   = 5;
     cv::Mat mask;
 
-    if (detector_class == "MSER")
+    if (detector == "MSER")
         image = image | gray;
-    else if (detector_class != "MSCR")
+    else if (detector != "MSCR")
         throw exceptions::bad_image();
 
+    // MSCR is implemented by the MSER detector and automatically
+    // used if detect() is given a colour image
     cv::MSER mser(delta, min_area, max_area, max_variation, min_diversity, max_evolution, area_threshold, min_margin, edge_blur_size);
     mser(image, regions, mask);
     return image;

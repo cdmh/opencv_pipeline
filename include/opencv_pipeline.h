@@ -19,11 +19,11 @@ save(char const * const pathname);
 
 // detect keypoint features
 std::function<cv::Mat (cv::Mat const &)>
-detect(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
+detect(std::string const &detector, std::vector<cv::KeyPoint> &keypoints);
 
 // detect region features
 std::function<cv::Mat (cv::Mat const &)>
-detect(char const * const detector, std::vector<std::vector<cv::Point>> &regions);
+detect(std::string const &detector, std::vector<std::vector<cv::Point>> &regions);
 
 // extract region features
 std::function<cv::Mat (cv::Mat const &)>

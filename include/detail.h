@@ -32,7 +32,7 @@ std::vector<cv::KeyPoint>
 to_keypoints(std::vector<std::vector<cv::Point>> const &regions);
 
 cv::Mat detect_keypoints(
-    char const *        const  detector_class,
+    std::string         const &detector,
     std::vector<cv::KeyPoint> &keypoints,
     cv::Mat             const &image);
 
