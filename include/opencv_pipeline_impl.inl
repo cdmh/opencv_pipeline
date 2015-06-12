@@ -230,6 +230,18 @@ if_(
     return std::bind(detail::if_, _1, cond, fn);
 }
 
+inline
+std::function<cv::Mat (cv::Mat const &)>
+if_(
+    bool const cond,
+    std::function<cv::Mat (cv::Mat const &)> fn)
+{
+    using namespace std::placeholders;
+    if (cond)
+        return fn;
+    return [](cv::Mat const &img)->cv::Mat { return img; };
+}
+
 
 //
 // image attributes
