@@ -69,9 +69,10 @@ void play_grey_video()
 {
     using namespace opencv_pipeline;
     auto vid = video("../../../../test data/videos/originals/frame_counter.3gp");
+    auto show = std::bind(imshow, "player", std::placeholders::_1);
     vid | gray_bgr
-        | mirror    // !!! why is this explicit ctor needed ?
-        | std::function<cv::Mat (cv::Mat const &)>(std::bind(imshow, "player", std::placeholders::_1))
+        | mirror
+        | show
         | play;
     cvDestroyAllWindows();
 }
@@ -208,7 +209,7 @@ void exhaustive()
     play_grey_video();
 
     // loading an image
-    cv::Mat img = cv::imread(test_file) | mirror;
+    cv::Mat img = cv::imread(test_file) | verify | mirror;
     img = img | gray_bgr;
     img = load(test_file) | gray_bgr | mirror;
     img = test_file | verify | gray_bgr | mirror;

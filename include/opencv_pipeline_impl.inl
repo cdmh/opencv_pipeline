@@ -74,7 +74,7 @@ cv::Mat operator|(cv::Mat const &left, cv::Mat(*right)(cv::Mat const &))
 
 // apply a function to an image - enables std::bind() bound parameters
 inline
-cv::Mat operator|(cv::Mat const &left, std::function<cv::Mat(cv::Mat const &)> right)
+cv::Mat operator|(cv::Mat const &left, std::function<cv::Mat(cv::Mat const &)> const &right)
 {
     return right(left);
 }
@@ -264,7 +264,7 @@ class video_pipeline
     {
     }
 
-    cv::Mat run()
+    cv::Mat next_frame()
     {
         cv::Mat image;
         capture_ >> image;
@@ -273,9 +273,10 @@ class video_pipeline
         return image;
     }
 
+    video_pipeline()                                  = delete;
     video_pipeline(video_pipeline &&)                 = delete;
-    video_pipeline &operator=(video_pipeline &&)      = delete;
     video_pipeline(video_pipeline const &)            = delete;
+    video_pipeline &operator=(video_pipeline &&)      = delete;
     video_pipeline &operator=(video_pipeline const &) = delete;
 
   private:
@@ -306,13 +307,18 @@ camera(int device)
     return video_pipeline(device);
 }
 
+
+//
+// video pipeline
+//
+
 inline
 std::pair<
     video_pipeline &,
     std::function<cv::Mat (cv::Mat const &)>>
 operator|(
     video_pipeline &lhs,
-    std::function<cv::Mat (cv::Mat const &)> rhs)
+    std::function<cv::Mat (cv::Mat const &)> const &rhs)
 {
     return {lhs,rhs};
 }
@@ -328,46 +334,26 @@ operator|(
     return {lhs,rhs};
 }
 
+// pipe directly into a function
 template<typename LHS, typename RHS>
 std::pair<
     std::pair<LHS, RHS>,
     std::function<cv::Mat (cv::Mat const &)>>
 operator|(
-    std::pair<LHS, RHS> lhs, 
-    std::function<cv::Mat (cv::Mat const &)> rhs)
-{
-    return {lhs, rhs};
-}
-
-template<typename LHS, typename RHS>
-std::pair<
-    std::pair<LHS, RHS>,
-    std::function<cv::Mat (cv::Mat const &)>>
-operator|(
-    std::pair<LHS, RHS> lhs, 
+    std::pair<LHS, RHS> lhs,
     cv::Mat(*rhs)(cv::Mat const &))
 {
     return {lhs, rhs};
 }
 
+// pipe into a bound function (std::bind)
 template<typename LHS, typename RHS>
 std::pair<
     std::pair<LHS, RHS>,
-    std::function<bool const (cv::Mat const &)>>
+    std::function<cv::Mat (cv::Mat const &)>>
 operator|(
-    std::pair<LHS, RHS> lhs, 
-    std::function<bool const (cv::Mat const &)> rhs)
-{
-    return {lhs, rhs};
-}
-
-template<typename LHS, typename RHS>
-std::pair<
-    std::pair<LHS, RHS>,
-    std::function<bool const (cv::Mat const &)>>
-operator|(
-    std::pair<LHS, RHS> lhs, 
-    bool const(*rhs)(cv::Mat const &))
+    std::pair<LHS, RHS> lhs,
+    std::function<cv::Mat (cv::Mat const &)> const &rhs)
 {
     return {lhs, rhs};
 }
@@ -375,18 +361,6 @@ operator|(
 typedef
 enum { play }
 terminator;
-
-template<typename LHS, typename RHS>
-cv::Mat run(std::pair<LHS, RHS> chain)
-{
-    return chain.second(run(chain.first));
-}
-
-inline
-cv::Mat run(video_pipeline &pipeline)
-{
-    return pipeline.run();
-}
 
 #pragma warning(push)
 #pragma warning(disable: 4127)  // C4127 conditional expression is constant
@@ -397,7 +371,7 @@ operator|(std::pair<LHS, RHS> lhs, terminator)
     try
     {
         while (1)
-            run(lhs);
+            next_frame(lhs);
     }
     catch (exceptions::end_of_file &)
     {
@@ -406,5 +380,17 @@ operator|(std::pair<LHS, RHS> lhs, terminator)
     return false;
 }
 #pragma warning(pop)
+
+inline
+cv::Mat next_frame(video_pipeline &pipeline)
+{
+    return pipeline.next_frame();
+}
+
+template<typename LHS, typename RHS>
+cv::Mat next_frame(std::pair<LHS, RHS> chain)
+{
+    return chain.second(next_frame(chain.first));
+}
 
 }   // namespace opencv_pipeline
