@@ -231,15 +231,18 @@ if_(
 }
 
 inline
+cv::Mat noop(cv::Mat const &image)
+{
+    return image;
+}
+
+inline
 std::function<cv::Mat (cv::Mat const &)>
 if_(
     bool const cond,
     std::function<cv::Mat (cv::Mat const &)> fn)
 {
-    using namespace std::placeholders;
-    if (cond)
-        return fn;
-    return [](cv::Mat const &img)->cv::Mat { return img; };
+    return cond? fn : noop;
 }
 
 
