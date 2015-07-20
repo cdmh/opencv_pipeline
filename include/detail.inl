@@ -17,13 +17,13 @@ cv::Mat color_space(cv::Mat const &image, int code)
 }
 
 inline
-cv::Mat convert(cv::Mat const &image, int type)
+cv::Mat convert(cv::Mat const &image, int type, double alpha, double beta)
 {
     if (image.type() == type)
         return image;
 
     cv::Mat dst;
-    image.convertTo(dst, type);
+    image.convertTo(dst, type, alpha, beta);
     return dst;
 }
 

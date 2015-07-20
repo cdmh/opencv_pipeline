@@ -9,9 +9,8 @@ namespace opencv_pipeline {
 namespace detail {
 
 // manuipulation
-cv::Mat convert(cv::Mat const &image, int type);
 cv::Mat color_space(cv::Mat const &image, int code);
-cv::Mat convert(cv::Mat const &image, int type);
+cv::Mat convert(cv::Mat const &image, int type, double alpha=1.0, double beta=0.0);
 cv::Mat dilate(cv::Mat const &image, int dx, int dy);
 cv::Mat erode(cv::Mat const &image, int dx, int dy);
 cv::Mat gaussian_blur(cv::Mat const &image, int dx, int dy, double sigmaX, double sigmaY, int border);

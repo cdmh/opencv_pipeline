@@ -132,10 +132,10 @@ color_space(int code)
 
 inline
 std::function<cv::Mat (cv::Mat const &)>
-convert(int type)
+convert(int type, double alpha=1.0, double beta=0.0)
 {
     using namespace std::placeholders;
-    return std::bind(detail::convert, _1, type);
+    return std::bind(detail::convert, _1, type, alpha, beta);
 }
 
 inline
