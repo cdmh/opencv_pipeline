@@ -19,7 +19,7 @@
     </ClCompile>
     <Link />
     <Link>
-      <AdditionalLibraryDirectories>..\..\..\lib\opencv\2.4\build\3rdparty\lib\$(Configuration);..\..\..\lib\opencv\2.4\build\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\lib\opencv\2.4\build64\3rdparty\lib\$(Configuration);..\..\..\lib\opencv\2.4\build64\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
   </ItemDefinitionGroup>
