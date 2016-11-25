@@ -237,6 +237,13 @@ cv::Mat save(char const * const pathname, cv::Mat const &image)
     return imwrite(pathname, image)? image : cv::Mat();
 }
 
+inline
+cv::Mat const &show(char const * const window_name, cv::Mat const &image)
+{
+    imshow(window_name, image);
+    return image;
+}
+
 }   // namespace detail
 
 }   // namespace opencv_pipeline

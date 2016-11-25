@@ -9,6 +9,22 @@ typedef
 enum { noverify=false, verify=true }
 verify_result;
 
+struct waitkey
+{
+    explicit waitkey(int delay = 0) : delay_(delay)
+    {
+    }
+
+    cv::Mat const &operator()(cv::Mat const &src) const
+    {
+        cvWaitKey(delay_);
+        return src;
+    }
+
+  private:
+    int const delay_;
+};
+
 // image loading
 cv::Mat load(char const * const pathname);
 cv::Mat load(std::string const &pathname);

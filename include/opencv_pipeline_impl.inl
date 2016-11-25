@@ -22,6 +22,13 @@ save(char const * const pathname)
 }
 
 inline
+std::function<cv::Mat const &(cv::Mat const &)>
+show(char const * const window_name="")
+{
+    return std::bind(detail::show, window_name, std::placeholders::_1);
+}
+
+inline
 cv::Rect roi(cv::Mat const &image)
 {
     cv::Point tl;
@@ -116,7 +123,6 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
         throw exceptions::bad_image();
     return image;
 }
-
 
 //
 // image manipulation

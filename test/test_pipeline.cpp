@@ -190,6 +190,9 @@ void exhaustive()
 {
     using namespace opencv_pipeline;
 
+    test_file | verify   | show("")        | waitkey(0);
+    test_file | noverify | show("window1") | waitkey(0);
+
     try
     {
         license_plate();
