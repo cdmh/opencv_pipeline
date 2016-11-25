@@ -23,7 +23,7 @@ save(char const * const pathname)
 
 inline
 std::function<cv::Mat const &(cv::Mat const &)>
-show(char const * const window_name="")
+show(char const * const window_name)
 {
     return std::bind(detail::show, window_name, std::placeholders::_1);
 }
