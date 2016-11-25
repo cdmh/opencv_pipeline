@@ -151,7 +151,7 @@ void license_plate()
         rect.size.height += rect.size.height * 0.625f;
 
         // step 7
-        std::vector< std::vector<cv::Point> > contours;  
+        contours.clear();
         findContours(src(rect.boundingRect() & roi(src)) | threshold(0., 255.), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
         double largest = 0.;

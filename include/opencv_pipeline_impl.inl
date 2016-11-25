@@ -289,7 +289,7 @@ class video_pipeline
     }
 
     video_pipeline()                                  = delete;
-    video_pipeline(video_pipeline &&)                 = delete;
+    video_pipeline(video_pipeline &&)                 = default;
     video_pipeline(video_pipeline const &)            = delete;
     video_pipeline &operator=(video_pipeline &&)      = delete;
     video_pipeline &operator=(video_pipeline const &) = delete;
