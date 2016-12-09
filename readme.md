@@ -1,10 +1,8 @@
-OpenCV Pipeline
-===============
+# OpenCV Pipeline
 
 A C++11 pipeline interface to OpenCV 2.4. See `develop` branch for current implementation.
 
-Motivation
-----------
+## Motivation
 
 Why write this:
 ```cpp
@@ -20,39 +18,34 @@ cv::flip(img, img, 1);
 when you can write this:
 ```cpp
 using namespace cv_pipeline;
-cv::Mat img = "monalisa.jpg" | verify | gray | mirror;
+cv::Mat img = "monalisa.jpg" | verify | gray_bgr | mirror;
 ```
 
-Principles
-==========
-
+## Principles
 * Lightweight
 * Safe
 * Efficient
 
-Lightweight
------------
-
-*OpenCV Pipeline* is designed to be lightweight and expression (somewhat functional). To change an image to gray scale, reflect it horizontally and save it back out, simply write:
-
+## Lightweight
+*OpenCV Pipeline* is designed to be lightweight and expressional (somewhat functional).
+Display an image:
 ```cpp
 using namespace opencv_pipeline;
-"colour.png" | verify | gray | mirror | save("result.png");
+"colour.png" | verify | show("image") | waitkey(5);
 ```
 
-That's all there is to it. No fuss, no variables, just a simple pipeline of actions. If you want a copy of the result for further processing, assign the expression to a variable:
-
+That's all there is to it. No fuss, no variables, just a simple pipeline of actions.
+If you want a copy of the result for further processing, assign the expression to a variable:
 ```cpp
 using namespace opencv_pipeline;
-auto gray_mirror = "colour.png" | verify | gray | mirror | save("result.png");
+auto img = "colour.png" | verify | show("image") | waitkey(5);
 ```
 
-Safe
-----
+## Safe
+Inline verification is always available. Add `verify` at any point in the pipeline and if the previous step produced an invalid result (empty `Mat`), then an exception is thrown, with information where it is available.
 
-Inline verification is always available. Added `verify` at any point in the pipeline and if the previous step produced an invalid result (empty `Mat`), then an exception is thrown, with information where it is available.
-
-It is mandatory to be explicit about error checking when loading an image within a pipeline. If you really want to avoid it, you can use `noverify`, but this is generally discouraged:
+It is mandatory to be explicit about error checking when loading an image within a pipeline.
+If you really want to avoid processing errors, you can use `noverify`, but this is generally discouraged:
 
 ```cpp
 auto image = "colour.png" | noverify | gray;
@@ -66,16 +59,13 @@ If the image load fails, and `noverify` is specified, then an empty image is pas
         image = image | gray;
 ```
 
-Efficient
----------
+## Efficient
 
 Some efficiency is compromised in the implementation with the hope that the compiler will be able to optimise the resulting code. OpenCV's reference counted `Mat` structures are a pain for optimisation, and return-by-value which should be a move operation isn't because of the ref-counted design.
 
-Examples
-========
-
-Extracting Features from Keypoints
-----------------------------------
+# Examples
+---
+### Extracting Features from Keypoints
 
 Load a picture of the Mona Lisa, change it to gray scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
 ```cpp
@@ -87,9 +77,7 @@ std::vector<cv::KeyPoint> keypoints;
     | save("result.png") | noverify;
 ```
 
-Extracting  Features from Regions
----------------------------------
-
+### Extracting  Features from Regions
 You want features from maximally stable regions instead of keypoints? Ok,
 ```cpp
 using namespace opencv_pipeline;
@@ -99,11 +87,18 @@ std::vector<std::vector<cv::Point>> regions;
     | save("result.png") | noverify;
 ```
 
+### Reusing a pipeline
+---
+Use `delay` to create a pipeline object that stores the function objects of the pipeline and calls then each file the pipeline is used.
+```cpp
+auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
+"monalisa.jpg" | verify | pipeline;
+"newton.jpg"   | verify | pipeline;
+```
 
-Reusing a pipeline
-------------------
-Reusing a pipeline is straightforward by storing the pipeline in a lambda function and call it for multiple images.
-
+### Parameterised pipelines
+---
+Parameterising a pipeline is straightforward by storing the pipeline in a lambda function and calling it for multiple images.
 ```cpp
 auto pipeline = [](char const * const filename)->cv::Mat {
     std::vector<cv::KeyPoint> keypoints;

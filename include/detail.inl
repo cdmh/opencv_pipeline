@@ -9,6 +9,27 @@ namespace opencv_pipeline {
 namespace detail {
 
 inline
+persistent_pipeline::persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn)
+{
+    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
+}
+
+inline
+persistent_pipeline &persistent_pipeline::append(std::function<cv::Mat (cv::Mat const &)> &&fn)
+{
+    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
+    return *this;
+}
+
+inline
+cv::Mat persistent_pipeline::operator()(cv::Mat &&image) const
+{
+    for (auto &fn : fn_)
+        image = fn(image);
+    return image;
+}
+
+inline
 cv::Mat color_space(cv::Mat const &image, int code)
 {
     cv::Mat dst;

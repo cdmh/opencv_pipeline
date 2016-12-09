@@ -8,6 +8,16 @@ namespace opencv_pipeline {
 
 namespace detail {
 
+struct persistent_pipeline
+{
+    explicit persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn);
+    persistent_pipeline &append(std::function<cv::Mat (cv::Mat const &)> &&fn);
+    cv::Mat operator()(cv::Mat &&image) const;
+
+  private:
+    std::vector<std::function<cv::Mat (cv::Mat const &)>> fn_;
+};
+
 // manuipulation
 cv::Mat color_space(cv::Mat const &image, int code);
 cv::Mat convert(cv::Mat const &image, int type, double alpha=1.0, double beta=0.0);

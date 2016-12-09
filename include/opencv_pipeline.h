@@ -54,4 +54,5 @@ cv::Mat mirror(cv::Mat const &image);
 
 #include "detail.h"
 #include "opencv_pipeline_impl.inl"
+#include "persistent_pipeline.inl"
 #include "detail.inl"
