@@ -72,6 +72,10 @@ extract(char const * const detector, std::vector<std::vector<cv::Point>> &region
 // by the user rather than explicitly called functions
 //
 
+//
+// image pipeline
+//
+
 // apply a function to an image
 inline
 cv::Mat operator|(cv::Mat const &left, cv::Mat(*right)(cv::Mat const &))
@@ -181,8 +185,6 @@ cv::Mat equalize_hist(cv::Mat image)
     return image;
 }
 
-
-
 inline
 cv::Mat gray_bgr(cv::Mat const &image)
 {
@@ -226,6 +228,13 @@ threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OT
 // conditions
 //
 
+
+inline
+cv::Mat noop(cv::Mat const &image)
+{
+    return image;
+}
+
 inline
 std::function<cv::Mat (cv::Mat const &)>
 if_(
@@ -234,12 +243,6 @@ if_(
 {
     using namespace std::placeholders;
     return std::bind(detail::if_, _1, cond, fn);
-}
-
-inline
-cv::Mat noop(cv::Mat const &image)
-{
-    return image;
 }
 
 inline
@@ -383,6 +386,18 @@ typedef
 enum { play }
 terminator;
 
+inline
+cv::Mat next_frame(video_pipeline &pipeline)
+{
+    return pipeline.next_frame();
+}
+
+template<typename LHS, typename RHS>
+cv::Mat next_frame(std::pair<LHS, RHS> chain)
+{
+    return chain.second(next_frame(chain.first));
+}
+
 #pragma warning(push)
 #pragma warning(disable: 4127)  // C4127 conditional expression is constant
 template<typename LHS, typename RHS>
@@ -401,17 +416,5 @@ operator|(std::pair<LHS, RHS> lhs, terminator)
     return false;
 }
 #pragma warning(pop)
-
-inline
-cv::Mat next_frame(video_pipeline &pipeline)
-{
-    return pipeline.next_frame();
-}
-
-template<typename LHS, typename RHS>
-cv::Mat next_frame(std::pair<LHS, RHS> chain)
-{
-    return chain.second(next_frame(chain.first));
-}
 
 }   // namespace opencv_pipeline
