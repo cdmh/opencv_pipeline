@@ -10,6 +10,7 @@ namespace detail {
 
 struct persistent_pipeline
 {
+    persistent_pipeline() = default;
     explicit persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn);
     persistent_pipeline &append(std::function<cv::Mat (cv::Mat const &)> &&fn);
     cv::Mat operator()(cv::Mat &&image) const;

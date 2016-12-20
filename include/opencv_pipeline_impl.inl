@@ -254,6 +254,15 @@ if_(
     return cond? fn : noop;
 }
 
+inline
+detail::persistent_pipeline
+if_(
+    bool const cond,
+    detail::persistent_pipeline pipeline)
+{
+    return cond? pipeline : detail::persistent_pipeline();
+}
+
 
 //
 // image attributes
