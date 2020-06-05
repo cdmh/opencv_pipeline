@@ -153,13 +153,51 @@ to_keypoints(std::vector<std::vector<cv::Point>> const &regions)
     return keypoints;
 }
 
+#if CV_MAJOR_VERSION==2
+inline auto create_detector(std::string const &detector_class)
+{
+    return cv::FeatureDetector::create(detector_class);
+}
+#elif CV_MAJOR_VERSION==3
+inline cv::Ptr<cv::Feature2D> create_detector(std::string const &detector_class)
+{
+    if (detector_class == "BRISK")
+        return cv::BRISK::create();
+    else if (detector_class == "FAST")
+        return cv::FastFeatureDetector::create();
+    else if (detector_class == "AGAST")
+        return cv::AgastFeatureDetector::create();
+    else if (detector_class == "HARRIS")
+        return cv::GFTTDetector::create(1000, 0.01, 1, 3, 3, true, 0.04);
+    else if (detector_class == "GFTT")
+    {
+        auto gftt = cv::GFTTDetector::create();
+        gftt->setHarrisDetector(true);
+        return gftt;
+    }
+    else if (detector_class == "MSER")
+        return cv::MSER::create();
+    else if (detector_class == "ORB")
+        return cv::ORB::create();
+    else if (detector_class == "KAZE")
+        return cv::KAZE::create();
+    else if (detector_class == "AKAZE")
+        return cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_KAZE);
+    else if (detector_class == "MLDB")
+        return cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB);
+    else if (detector_class == "SIFT")
+        return cv::SIFT::create();
+    return {};
+}
+#endif
+
 inline
 cv::Mat detect_keypoints(
     std::string         const &detector_class,
     std::vector<cv::KeyPoint> &keypoints,
     cv::Mat             const &image)
 {
-    auto detector = cv::FeatureDetector::create(detector_class);
+    auto detector = create_detector(detector_class);
     detector->detect(image, keypoints, cv::Mat());
     return image;
 }
@@ -189,8 +227,14 @@ cv::Mat detect_regions(
 
     // MSCR is implemented by the MSER detector and automatically
     // used if detect() is given a colour image
+#if CV_MAJOR_VERSION==2
     cv::MSER mser(delta, min_area, max_area, max_variation, min_diversity, max_evolution, area_threshold, min_margin, edge_blur_size);
     mser(image, regions, mask);
+#elif CV_MAJOR_VERSION==3
+    auto mser = cv::MSER::create(delta, min_area, max_area, max_variation, min_diversity, max_evolution, area_threshold, min_margin, edge_blur_size);
+    std::vector<cv::Rect> bboxes;
+    mser->detectRegions(image, regions, bboxes);
+#endif
     return image;
 }
 
@@ -219,13 +263,35 @@ void copy_keypoint_descriptors(
     }
 }
 
+#if CV_MAJOR_VERSION==2
+inline auto create_descriptor_extractor(char const * const extractor_class)
+{
+    return cv::DescriptorExtractor::create(extractor_class);
+}
+#elif CV_MAJOR_VERSION==3
+inline cv::Ptr<cv::Feature2D> create_descriptor_extractor(char const * const extractor_class)
+{
+    if (strcmp(extractor_class, "SIFT") == 0)
+        return cv::SIFT::create();
+    else if (strcmp(extractor_class, "BRISK") == 0)
+        return cv::BRISK::create();
+    else if (strcmp(extractor_class, "ORB") == 0)
+        return cv::ORB::create();
+    else if (strcmp(extractor_class, "KAZE") == 0)
+        return cv::KAZE::create();
+    else if (strcmp(extractor_class, "AKAZE") == 0)
+        return cv::AKAZE::create();
+    return {};
+}
+#endif
+
 inline
 cv::Mat extract_keypoints(
     char const *              const  extractor_class,
     std::vector<cv::KeyPoint> const &keypoints,
     cv::Mat                   const &image)
 {
-    auto extractor = cv::DescriptorExtractor::create(extractor_class);
+    auto extractor = create_descriptor_extractor(extractor_class);
 
     cv::Mat descriptors;
     std::vector<cv::KeyPoint> kps(keypoints);

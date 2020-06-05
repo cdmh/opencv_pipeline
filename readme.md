@@ -6,7 +6,7 @@ A C++11 pipeline interface to OpenCV 2.4. See `develop` branch for current imple
 
 Why write this:
 ```cpp
-cv::Mat img = cv::imread("monalisa.jpg");
+auto img = cv::imread("monalisa.jpg");
 if (img.empty())
     throw std::runtime_error("file not found");
 
@@ -18,7 +18,7 @@ cv::flip(img, img, 1);
 when you can write this:
 ```cpp
 using namespace cv_pipeline;
-cv::Mat img = "monalisa.jpg" | verify | gray_bgr | mirror;
+auto img = "monalisa.jpg" | verify | gray_bgr | mirror;
 ```
 
 ## Principles

@@ -46,5 +46,6 @@
     <None Include="..\include\detail.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="..\readme.md" />
   </ItemGroup>
 </Project>

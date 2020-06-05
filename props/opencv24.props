@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>..\..\..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)\compiler\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\opencv\2.4\build\$(Platform);$(SolutionDir)..\opencv\2.4\build\$(Platform)\vc12;$(SolutionDir)..\opencv\2.4\include;$(SolutionDir)..\opencv\2.4\include\opencv;$(SolutionDir)..\opencv\2.4\modules\core\include;$(SolutionDir)..\opencv\2.4\modules\imgproc\include;$(SolutionDir)..\opencv\2.4\modules\bioinspired\include;$(SolutionDir)..\opencv\2.4\modules\calib3d\include;$(SolutionDir)..\opencv\2.4\modules\contrib\include;$(SolutionDir)..\opencv\2.4\modules\cuda\include;$(SolutionDir)..\opencv\2.4\modules\cudaarithm\include;$(SolutionDir)..\opencv\2.4\modules\cudabgsegm\include;$(SolutionDir)..\opencv\2.4\modules\cudacodec\include;$(SolutionDir)..\opencv\2.4\modules\cudafeatures2d\include;$(SolutionDir)..\opencv\2.4\modules\cudafilters\include;$(SolutionDir)..\opencv\2.4\modules\cudaimgproc\include;$(SolutionDir)..\opencv\2.4\modules\cudalegacy\include;$(SolutionDir)..\opencv\2.4\modules\cudaoptflow\include;$(SolutionDir)..\opencv\2.4\modules\cudastereo\include;$(SolutionDir)..\opencv\2.4\modules\cudawarping\include;$(SolutionDir)..\opencv\2.4\modules\cudev\include;$(SolutionDir)..\opencv\2.4\modules\features2d\include;$(SolutionDir)..\opencv\2.4\modules\flann\include;$(SolutionDir)..\opencv\2.4\modules\highgui\include;$(SolutionDir)..\opencv\2.4\modules\legacy\include;$(SolutionDir)..\opencv\2.4\modules\matlab\include;$(SolutionDir)..\opencv\2.4\modules\ml\include;$(SolutionDir)..\opencv\2.4\modules\nonfree\include;$(SolutionDir)..\opencv\2.4\modules\objdetect\include;$(SolutionDir)..\opencv\2.4\modules\ocl\include;$(SolutionDir)..\opencv\2.4\modules\optim\include;$(SolutionDir)..\opencv\2.4\modules\photo\include;$(SolutionDir)..\opencv\2.4\modules\shape\include;$(SolutionDir)..\opencv\2.4\modules\softcascade\include;$(SolutionDir)..\opencv\2.4\modules\stitching\include;$(SolutionDir)..\opencv\2.4\modules\superres\include;$(SolutionDir)..\opencv\2.4\modules\ts\include;$(SolutionDir)..\opencv\2.4\modules\video\include;$(SolutionDir)..\opencv\2.4\modules\videostab\include;$(SolutionDir)..\opencv\2.4\modules\viz\include;$(SolutionDir)..\opencv\2.4\modules\world\include;$(SolutionDir)..\opencv\2.4\modules\imgcodecs\include;$(SolutionDir)..\opencv\2.4\modules\videoio\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;CDMH_SHOW_WORK_POOL_PROGRESS_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MinimalRebuild>true</MinimalRebuild>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link />
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\opencv\2.4\build\$(Platform)\3rdparty\lib\$(Configuration);$(SolutionDir)..\opencv\2.4\build\$(Platform)\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

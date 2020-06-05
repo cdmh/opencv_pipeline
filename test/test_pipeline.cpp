@@ -3,7 +3,7 @@
 
 namespace { // anonymous namespace
 
-#define TESTDATA_DIR "../../../../test data/"
+#define TESTDATA_DIR "D:/QMUL/test data/"
 char const * const test_file = TESTDATA_DIR "images/monalisa.jpg";
 
 void detect_features()
@@ -11,7 +11,7 @@ void detect_features()
     using namespace opencv_pipeline;
 
     std::vector<cv::KeyPoint> keypoints;
-    test_file | verify
+    auto descriptors = test_file | verify
         | gray_bgr
         | detect("HARRIS", keypoints)
         | extract("SIFT", keypoints);
@@ -44,8 +44,7 @@ void reuse_pipeline()
     using namespace opencv_pipeline;
 
     auto pipeline = [](char const * const filename)->cv::Mat {
-            std::vector<cv::KeyPoint> keypoints;
-            return filename| verify | gray_bgr | mirror;
+            return filename | verify | gray_bgr | mirror;
         };
 
     pipeline(test_file)
@@ -102,17 +101,18 @@ void license_plate()
 
     char const * const filename = TESTDATA_DIR "images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
-    cv::Mat src = filename | verify | if_(channels(3), gray);// | convert(CV_64FC1);
-
-    preprocess_license_plate(src);
-    cv::Mat mask = preprocess_license_plate(src);
+    auto src = filename | verify | if_(channels(3), gray);
+    auto mask = preprocess_license_plate(src);
 
     cv::Mat overlay;
     cv::merge(
-        { cv::Mat::zeros(mask.rows, mask.cols, CV_8UC1),
-          cv::Mat::zeros(mask.rows, mask.cols, CV_8UC1),
-          mask
-        },
+        cv::InputArrayOfArrays(
+            std::vector<cv::Mat>{
+                cv::Mat::zeros(mask.rows, mask.cols, CV_8UC1),  // Blue channel
+                cv::Mat::zeros(mask.rows, mask.cols, CV_8UC1),  // Green channel
+                mask                                            // Red channel
+            }
+        ),
         overlay);
 
     double alpha = 0.6;
@@ -211,7 +211,7 @@ void exhaustive()
 #endif
 
     // loading an image
-    cv::Mat img = cv::imread(test_file) | verify | mirror;
+    auto img = cv::imread(test_file) | verify | mirror;
     img = img | gray_bgr;
     img = load(test_file) | gray_bgr | mirror;
     img = test_file | verify | gray_bgr | mirror;
@@ -235,7 +235,9 @@ int main(int /*argc*/, char * /*argv*/[])
         cv::setBreakOnError(true);
 #endif
 
+#if CV_MAJOR_VERSION==2
     cv::initModule_nonfree();
+#endif
     exhaustive();
 	return 0;
 }
