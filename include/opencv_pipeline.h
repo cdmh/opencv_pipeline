@@ -39,12 +39,13 @@ cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
 cv::Mat mirror(cv::Mat const &image);
 
 // early pipeline termination
-struct ending {};
-ending end() { return ending(); }
+typedef
+enum { end }
+pipeline_terminator;
 
 // never required, but here for completeness
 inline
-cv::Mat operator|(cv::Mat const &img, std::function<ending ()>)
+cv::Mat operator|(cv::Mat const &img, pipeline_terminator)
 {
     return img;
 }

@@ -132,26 +132,10 @@ detail::feature_detector<cv::KeyPoint> operator|(std::vector<cv::KeyPoint> const
 // e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
 //      static_assert(std::is_same<std::vector<cv::KeyPoint>, decltype(kps)>::value);
 inline
-std::vector<cv::KeyPoint> operator|(detail::feature_detector<cv::KeyPoint> const &detector, std::function<ending ()>)
+std::vector<cv::KeyPoint> operator|(detail::feature_detector<cv::KeyPoint> const &detector, pipeline_terminator)
 {
     return detector.features;
 }
-
-//inline
-//std::function<cv::Mat (cv::Mat const &)>
-//detect(std::string const &detector, std::vector<std::vector<cv::Point>> &regions)
-//{
-//    return std::bind(detail::detect_regions, detector, std::ref(regions), std::placeholders::_1);
-//}
-//
-//inline
-//std::function<cv::Mat (cv::Mat const &)>
-//extract(char const * const detector, std::vector<std::vector<cv::Point>> &regions)
-//{
-//    return std::bind(detail::extract_regions, detector, std::ref(regions), std::placeholders::_1);
-//}
-//
-
 
 inline
 detail::feature_detector<std::vector<cv::Point>>
@@ -189,7 +173,7 @@ detail::feature_detector<std::vector<cv::Point>> operator|(std::vector<std::vect
 // e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
 //      static_assert(std::is_same<std::vector<std::vector<cv::KeyPoint>>, decltype(kps)>::value);
 inline
-std::vector<std::vector<cv::Point>> operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, std::function<ending ()>)
+std::vector<std::vector<cv::Point>> operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, pipeline_terminator)
 {
     return detector.features;
 }
@@ -521,7 +505,7 @@ operator|(
 
 typedef
 enum { play }
-terminator;
+video_pipeline_terminator;
 
 inline
 cv::Mat next_frame(video_pipeline &pipeline)
@@ -539,7 +523,7 @@ cv::Mat next_frame(std::pair<LHS, RHS> chain)
 #pragma warning(disable: 4127)  // C4127 conditional expression is constant
 template<typename LHS, typename RHS>
 bool const
-operator|(std::pair<LHS, RHS> lhs, terminator)
+operator|(std::pair<LHS, RHS> lhs, video_pipeline_terminator)
 {
     try
     {

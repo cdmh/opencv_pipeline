@@ -17,7 +17,7 @@ void detect_features()
             | gray_bgr
             | keypoints("HARRIS")
             | descriptors("SIFT")
-            | end;                  // optional end terminator
+            | end;                  // optional end video_pipeline_terminator
         static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
 
         // find HARRIS keypoint features
@@ -40,7 +40,7 @@ void detect_features()
             | gray_bgr
             | regions("MSCR")
             | descriptors("SIFT")
-            | end;                  // optional end terminator
+            | end;                  // optional end video_pipeline_terminator
         static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
 
         // find MSCR region features
@@ -69,9 +69,9 @@ void pipelines_without_assignment()
     using namespace opencv_pipeline;
 
     test_file | verify;
-    test_file | verify | gray_bgr | verify | mirror | save("result.png");
-    test_file | verify | gray_bgr | mirror | save("result.png") | verify;
-    std::string(test_file) | verify | gray_bgr | mirror | save("result.png") | noverify;
+    test_file | verify | gray_bgr | verify | mirror | save("result1.png");
+    test_file | verify | gray_bgr | mirror | save("result2.png") | verify;
+    std::string(test_file) | verify | gray_bgr | mirror | save("result3.png") | noverify;
 }
 
 void reuse_pipeline()
