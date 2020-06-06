@@ -51,7 +51,7 @@ If you really want to avoid processing errors, you can use `noverify`, but this 
 auto image = "colour.png" | noverify | gray;
 ```
 
-If the image load fails, and `noverify` is specified, then an empty image is passed to the next function in the pipeline. In this case, `gray` which calls OpenCV's `cvtColor` which will fail. If you are in exception free, then split the pipeline and use `noverify`:
+If the image load fails, and `noverify` is specified, then an empty image is passed to the next function in the pipeline. In this case, `gray` which calls OpenCV's `cvtColor` which will fail. If you are in an exception free environment, then split the pipeline and use `noverify`:
 
 ```cpp
     auto image = "colour.png" | noverify;
@@ -70,26 +70,25 @@ Some efficiency is compromised in the implementation with the hope that the comp
 Load a picture of the Mona Lisa, change it to gray scale, detect Harris Corner feature keypoints, extract SIFT feature descriptors and save the descriptors in a file result.png, ignoring save errors
 ```cpp
 using namespace opencv_pipeline;
-std::vector<cv::KeyPoint> keypoints;
 "monalisa.jpg" | verify
     | gray
-    | detect("HARRIS", keypoints) | extract("SIFT", keypoints)
-    | save("result.png") | noverify;
+    | keypoints("HARRIS") | descriptors("SIFT")
+    | save("harris_sift.png") | noverify;
 ```
 
 ### Extracting  Features from Regions
 You want features from maximally stable regions instead of keypoints? Ok,
 ```cpp
 using namespace opencv_pipeline;
-std::vector<std::vector<cv::Point>> regions;
 "monalisa.jpg" | verify
-    | detect("MSCR", regions) | extract("SIFT", keypoints)
-    | save("result.png") | noverify;
+    | regions("MSCR") | descriptors("SIFT")
+    | save("mscr_sift.png") | noverify;
 ```
 
 ### Reusing a pipeline
 ---
-Use `delay` to create a pipeline object that stores the function objects of the pipeline and calls then each file the pipeline is used.
+Use `delay` to create a pipeline object to store the function objects of the pipeline.
+The pipeline can then be reused with different inputs.
 ```cpp
 auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
 "monalisa.jpg" | verify | pipeline;
@@ -98,20 +97,21 @@ auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
 
 ### Parameterised pipelines
 ---
-Parameterising a pipeline is straightforward by storing the pipeline in a lambda function and calling it for multiple images.
+Parameterising a pipeline is straightforward using a lambda function to store the pipeline,
+and call it for multiple images.
 ```cpp
+using namespace opencv_pipeline;
 auto pipeline = [](char const * const filename)->cv::Mat {
-    std::vector<cv::KeyPoint> keypoints;
     return
         filename| verify
             | gray
-            | detect("HARRIS", keypoints)
-            | extract("SIFT", keypoints);
+            | keypoints("HARRIS")
+            | descriptors("SIFT");
 };
 
 pipeline("monalisa.jpg")
-    | save("monalisa-descriptors.jpg") | noverify;
+    | save("monalisa-harris-sift.jpg") | noverify;
 
 pipeline("da_vinci_human11.jpg")
-    | save("da_vinci_human11-descriptors.jpg") | noverify;
+    | save("da_vinci_human11-harris-sift.png") | noverify;
 ```

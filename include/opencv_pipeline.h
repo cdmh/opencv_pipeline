@@ -33,22 +33,21 @@ cv::Mat load(std::string const &pathname);
 std::function<cv::Mat (cv::Mat const &)>
 save(char const * const pathname);
 
-// detect keypoint features
-std::function<cv::Mat (cv::Mat const &)>
-detect(std::string const &detector, std::vector<cv::KeyPoint> &keypoints);
-
-// detect region features
-std::function<cv::Mat (cv::Mat const &)>
-detect(std::string const &detector, std::vector<std::vector<cv::Point>> &regions);
-
-// extract region features
-std::function<cv::Mat (cv::Mat const &)>
-extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints);
-
 // image manipulation
 cv::Mat gray(cv::Mat const &image);         // single channel grey-scale image
 cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
 cv::Mat mirror(cv::Mat const &image);
+
+// early pipeline termination
+struct ending {};
+ending end() { return ending(); }
+
+// never required, but here for completeness
+inline
+cv::Mat operator|(cv::Mat const &img, std::function<ending ()>)
+{
+    return img;
+}
 
 }   // namespace opencv_pipeline
 

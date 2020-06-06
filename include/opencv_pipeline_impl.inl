@@ -39,26 +39,48 @@ cv::Rect roi(cv::Mat const &image)
 
 namespace detail {
 
-struct keypoint_detector
+// T = cv::KeyPoint           for points
+// T = std::vector<cv::Point> for regions
+template<typename T>
+struct feature_detector
 {
-    keypoint_detector(std::string name) : name(name)
+    feature_detector(std::string name) : name(name)
     {
     }
 
-    cv::Mat operator()(cv::Mat const &img)
+    feature_detector(cv::Mat img, std::vector<T> kps) : image(img), features(kps)
     {
-        image = img;
-        return detail::detect_keypoints(name, keypoints, image);
+    }
+
+    cv::Mat operator()(cv::Mat const &img);
+
+    operator std::vector<T>()
+    {
+        return features;
     }
     
-    cv::Mat                   image;
-    std::string               name;
-    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat        image;
+    std::string    name;
+    std::vector<T> features;
 };
 
-struct keypoint_extractor
+template<>
+cv::Mat feature_detector<cv::KeyPoint>::operator()(cv::Mat const &img)
 {
-    keypoint_extractor(std::string name) : name(name)
+    image = img;
+    return detail::detect_keypoints(name, features, image);
+}
+
+template<>
+cv::Mat feature_detector<std::vector<cv::Point>>::operator()(cv::Mat const &img)
+{
+    image = img;
+    return detail::detect_regions(name, features, image);
+}
+
+struct feature_extractor
+{
+    feature_extractor(std::string name) : name(name)
     {
     }
 
@@ -68,61 +90,109 @@ struct keypoint_extractor
 }   // namespace detail
 
 inline
-detail::keypoint_detector
+detail::feature_detector<cv::KeyPoint>
 keypoints(std::string detector)
 {
-    return detail::keypoint_detector(std::move(detector));
+    return detail::feature_detector<cv::KeyPoint>(std::move(detector));
 }
 
 inline
-detail::keypoint_extractor
-descriptors(char const * const extractor)
+detail::feature_extractor
+descriptors(std::string extractor)
 {
-    return detail::keypoint_extractor(extractor);
+    return detail::feature_extractor(extractor);
 }
 
 inline
-detail::keypoint_detector const &operator|(cv::Mat image, detail::keypoint_detector &&detector)
+detail::feature_detector<cv::KeyPoint> &&operator|(cv::Mat image, detail::feature_detector<cv::KeyPoint> &&detector)
 {
     detector(image);
-    return detector;
+    return std::move(detector);
 }
 
 inline
-cv::Mat operator|(detail::keypoint_detector const &detector, detail::keypoint_extractor const &extractor)
+cv::Mat operator|(detail::feature_detector<cv::KeyPoint> const &detector, detail::feature_extractor const &extractor)
 {
-    return detail::extract_keypoints(extractor.name, detector.keypoints, detector.image);
-}
-
-
-inline
-std::function<cv::Mat (cv::Mat const &)>
-detect(std::string const &detector, std::vector<cv::KeyPoint> &keypoints)
-{
-    return std::bind(detail::detect_keypoints, detector, std::ref(keypoints), std::placeholders::_1);
+    return detail::extract_keypoints(extractor.name, detector.features, detector.image);
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
-detect(std::string const &detector, std::vector<std::vector<cv::Point>> &regions)
+detail::feature_detector<cv::KeyPoint> operator|(cv::Mat image, std::vector<cv::KeyPoint> const &keypoints)
 {
-    return std::bind(detail::detect_regions, detector, std::ref(regions), std::placeholders::_1);
+    return detail::feature_detector<cv::KeyPoint>(image, keypoints);
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
-extract(char const * const detector, std::vector<cv::KeyPoint> &keypoints)
+detail::feature_detector<cv::KeyPoint> operator|(std::vector<cv::KeyPoint> const &keypoints, cv::Mat image)
 {
-    return std::bind(detail::extract_keypoints, detector, std::ref(keypoints), std::placeholders::_1);
+    return detail::feature_detector<cv::KeyPoint>(image, keypoints);
+}
+
+// enable early pipeline to detect features without extracting descriptors
+// e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
+//      static_assert(std::is_same<std::vector<cv::KeyPoint>, decltype(kps)>::value);
+inline
+std::vector<cv::KeyPoint> operator|(detail::feature_detector<cv::KeyPoint> const &detector, std::function<ending ()>)
+{
+    return detector.features;
+}
+
+//inline
+//std::function<cv::Mat (cv::Mat const &)>
+//detect(std::string const &detector, std::vector<std::vector<cv::Point>> &regions)
+//{
+//    return std::bind(detail::detect_regions, detector, std::ref(regions), std::placeholders::_1);
+//}
+//
+//inline
+//std::function<cv::Mat (cv::Mat const &)>
+//extract(char const * const detector, std::vector<std::vector<cv::Point>> &regions)
+//{
+//    return std::bind(detail::extract_regions, detector, std::ref(regions), std::placeholders::_1);
+//}
+//
+
+
+inline
+detail::feature_detector<std::vector<cv::Point>>
+regions(std::string detector)
+{
+    return detail::feature_detector<std::vector<cv::Point>>(std::move(detector));
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
-extract(char const * const detector, std::vector<std::vector<cv::Point>> &regions)
+detail::feature_detector<std::vector<cv::Point>> &&operator|(cv::Mat image, detail::feature_detector<std::vector<cv::Point>> &&detector)
 {
-    return std::bind(detail::extract_regions, detector, std::ref(regions), std::placeholders::_1);
+    detector(image);
+    return std::move(detector);
 }
 
+inline
+cv::Mat operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, detail::feature_extractor const &extractor)
+{
+    return detail::extract_regions(extractor.name, detector.features, detector.image);
+}
+
+inline
+detail::feature_detector<std::vector<cv::Point>> operator|(cv::Mat image, std::vector<std::vector<cv::Point>> const &features)
+{
+    return detail::feature_detector<std::vector<cv::Point>>(image, features);
+}
+
+inline
+detail::feature_detector<std::vector<cv::Point>> operator|(std::vector<std::vector<cv::Point>> const &features, cv::Mat image)
+{
+    return detail::feature_detector<std::vector<cv::Point>>(image, features);
+}
+
+// enable early pipeline to detect features without extracting descriptors
+// e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
+//      static_assert(std::is_same<std::vector<std::vector<cv::KeyPoint>>, decltype(kps)>::value);
+inline
+std::vector<std::vector<cv::Point>> operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, std::function<ending ()>)
+{
+    return detector.features;
+}
 
 //
 // operators -- these are not forward referenced in the

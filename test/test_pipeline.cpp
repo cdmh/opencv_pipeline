@@ -10,28 +10,58 @@ void detect_features()
 {
     using namespace opencv_pipeline;
 
-    auto descriptors1 = test_file | verify
-        | gray_bgr
-        | keypoints("HARRIS")
-        | descriptors("SIFT");
+    // test keypoint feature detections and descriptor extraction
+    {
+        // extract SIFT descriptors from HARRIS features (features)
+        auto descriptors1 = test_file | verify
+            | gray_bgr
+            | keypoints("HARRIS")
+            | descriptors("SIFT")
+            | end;                  // optional end terminator
+        static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
 
-    std::vector<cv::KeyPoint> keypoints;
-    auto descriptors = test_file | verify
-        | gray_bgr
-        | detect("HARRIS", keypoints)
-        | extract("SIFT", keypoints);
+        // find HARRIS keypoint features
+        auto img = test_file | verify | gray_bgr;
+        auto kps = img | keypoints("HARRIS") | end;
+        static_assert(std::is_same<std::vector<cv::KeyPoint>, decltype(kps)>::value);
 
-    std::vector<std::vector<cv::Point>> regions1;
-    auto mscr_sift = 
-        test_file | verify
-        | detect("MSCR", regions1)
-        | extract("SIFT", regions1);
+        // continuation of the pipeline to extract descriptors; the order of
+        // keypoint and image is unimportant
+        auto dsc1 = img | kps | descriptors("SIFT");
+        auto dsc2 = kps | img | descriptors("SIFT");
+        static_assert(std::is_same<cv::Mat, decltype(dsc1)>::value);
+        static_assert(std::is_same<cv::Mat, decltype(dsc2)>::value);
+    }
 
-    std::vector<std::vector<cv::Point>> regions2;
-    auto mser_sift =
-        test_file | verify
-        | detect("MSER", regions2)
-        | extract("SIFT", regions2);
+    // test region feature detections and descriptor extraction
+    {
+        // extract MSCR descriptors from SIFT features (features)
+        auto descriptors1 = test_file | verify
+            | gray_bgr
+            | regions("MSCR")
+            | descriptors("SIFT")
+            | end;                  // optional end terminator
+        static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
+
+        // find MSCR region features
+        auto img = test_file | verify;
+        auto rgn = img | regions("MSCR") | end;
+        static_assert(std::is_same<std::vector<std::vector<cv::Point>>, decltype(rgn)>::value);
+
+        // continuation of the pipeline to extract descriptors; the order of
+        // keypoint and image is unimportant
+        auto mscr_sift1 = img | rgn | descriptors("SIFT");
+        auto mscr_sift2 = rgn | img | descriptors("SIFT");
+        static_assert(std::is_same<cv::Mat, decltype(mscr_sift1)>::value);
+        static_assert(std::is_same<cv::Mat, decltype(mscr_sift2)>::value);
+
+        std::vector<std::vector<cv::Point>> regions2;
+        auto mser_sift =
+            test_file | verify
+            | regions("MSER")
+            | descriptors("SIFT");
+        static_assert(std::is_same<cv::Mat, decltype(mser_sift)>::value);
+    }
 }
 
 void pipelines_without_assignment()
@@ -231,6 +261,61 @@ void exhaustive()
 }   // anonymous namespace
 
 
+namespace examples {
+
+void extract_descriptors_from_keypoints()
+{
+    using namespace opencv_pipeline;
+    TESTDATA_DIR "images/monalisa.jpg" | verify
+        | gray
+        | keypoints("HARRIS") | descriptors("SIFT")
+        | save("harris_sift.png") | noverify;
+}
+
+void extract_descriptors_from_regions()
+{
+    using namespace opencv_pipeline;
+    TESTDATA_DIR "images/monalisa.jpg" | verify
+        | regions("MSCR") | descriptors("SIFT")
+        | save("mscr_sift.png") | noverify;
+}
+
+void reuse_pipeline()
+{
+    using namespace opencv_pipeline;
+    auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
+    TESTDATA_DIR "images/monalisa.jpg"                    | verify | pipeline;
+    TESTDATA_DIR "images/african-art-1732250_960_720.jpg" | verify | pipeline;
+}
+
+void parameterised_pipeline()
+{
+    using namespace opencv_pipeline;
+    auto pipeline = [](char const * const filename)->cv::Mat {
+        return
+            filename| verify
+                | gray
+                | keypoints("HARRIS")
+                | descriptors("SIFT");
+    };
+
+    pipeline(TESTDATA_DIR "images/monalisa.jpg")
+        | save("monalisa-harris-sift.jpg") | noverify;
+
+    pipeline(TESTDATA_DIR "images/da_vinci_human11.jpg")
+        | save("da_vinci_human11-harris-sift.png") | noverify;
+}
+
+void run()
+{
+    extract_descriptors_from_keypoints();
+    extract_descriptors_from_regions();
+    reuse_pipeline();
+    parameterised_pipeline();
+}
+
+}   // namespace examples
+
 extern "C" int __stdcall IsDebuggerPresent(void);
 int main(int /*argc*/, char * /*argv*/[])
 {
@@ -243,6 +328,8 @@ int main(int /*argc*/, char * /*argv*/[])
 #if CV_MAJOR_VERSION==2
     cv::initModule_nonfree();
 #endif
+
+    examples::run();
     exhaustive();
 	return 0;
 }

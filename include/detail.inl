@@ -300,7 +300,7 @@ cv::Mat extract_keypoints(
     if (kps.size() == keypoints.size())
         return descriptors;
 
-    // if the extractor has removed any keypoints, then we have
+    // if the extractor has removed any features, then we have
     // to copy each descriptor in turn, skipping the descriptor without
     // a keypoint. this will result in a descriptor with zero data in
     // the descriptor
@@ -311,9 +311,9 @@ cv::Mat extract_keypoints(
 
 inline
 cv::Mat extract_regions(
-    std::string                          extractor_class,
-    std::vector<std::vector<cv::Point>> &regions,
-    cv::Mat                       const &image)
+    std::string                                extractor_class,
+    std::vector<std::vector<cv::Point>> const &regions,
+    cv::Mat                             const &image)
 {
     return extract_keypoints(extractor_class, to_keypoints(regions), image);
 }

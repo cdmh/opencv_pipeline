@@ -57,9 +57,9 @@ cv::Mat extract_keypoints(
     cv::Mat                   const &image);
 
 cv::Mat extract_regions(
-    std::string                          extractor_class,
-    std::vector<std::vector<cv::Point>> &regions,
-    cv::Mat                       const &image);
+    std::string                                extractor_class,
+    std::vector<std::vector<cv::Point>> const &regions,
+    cv::Mat                             const &image);
 
 cv::Mat        save(char const * const pathname, cv::Mat const &image);
 cv::Mat const &show(char const * const window_name, cv::Mat const &image);
