@@ -103,10 +103,10 @@ Parameterising a pipeline is straightforward by storing the pipeline in a lambda
 auto pipeline = [](char const * const filename)->cv::Mat {
     std::vector<cv::KeyPoint> keypoints;
     return
-    filename| verify
-        | gray
-        | detect("HARRIS", keypoints)
-        | extract("SIFT", keypoints);
+        filename| verify
+            | gray
+            | detect("HARRIS", keypoints)
+            | extract("SIFT", keypoints);
 };
 
 pipeline("monalisa.jpg")

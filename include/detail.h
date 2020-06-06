@@ -52,12 +52,12 @@ cv::Mat detect_regions(
     cv::Mat                              image);
 
 cv::Mat extract_keypoints(
-    char const *              const  extractor_class,
+    std::string                      extractor_class,
     std::vector<cv::KeyPoint> const &keypoints,
     cv::Mat                   const &image);
 
 cv::Mat extract_regions(
-    char const *                  const  extractor_class,
+    std::string                          extractor_class,
     std::vector<std::vector<cv::Point>> &regions,
     cv::Mat                       const &image);
 

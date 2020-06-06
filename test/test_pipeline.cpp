@@ -10,6 +10,11 @@ void detect_features()
 {
     using namespace opencv_pipeline;
 
+    auto descriptors1 = test_file | verify
+        | gray_bgr
+        | keypoints("HARRIS")
+        | descriptors("SIFT");
+
     std::vector<cv::KeyPoint> keypoints;
     auto descriptors = test_file | verify
         | gray_bgr

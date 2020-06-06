@@ -264,22 +264,22 @@ void copy_keypoint_descriptors(
 }
 
 #if CV_MAJOR_VERSION==2
-inline auto create_descriptor_extractor(char const * const extractor_class)
+inline auto create_descriptor_extractor(std::string extractor_class)
 {
     return cv::DescriptorExtractor::create(extractor_class);
 }
 #elif CV_MAJOR_VERSION==3
-inline cv::Ptr<cv::Feature2D> create_descriptor_extractor(char const * const extractor_class)
+inline cv::Ptr<cv::Feature2D> create_descriptor_extractor(std::string extractor_class)
 {
-    if (strcmp(extractor_class, "SIFT") == 0)
+    if (extractor_class == "SIFT")
         return cv::SIFT::create();
-    else if (strcmp(extractor_class, "BRISK") == 0)
+    else if (extractor_class == "BRISK")
         return cv::BRISK::create();
-    else if (strcmp(extractor_class, "ORB") == 0)
+    else if (extractor_class == "ORB")
         return cv::ORB::create();
-    else if (strcmp(extractor_class, "KAZE") == 0)
+    else if (extractor_class == "KAZE")
         return cv::KAZE::create();
-    else if (strcmp(extractor_class, "AKAZE") == 0)
+    else if (extractor_class == "AKAZE")
         return cv::AKAZE::create();
     return {};
 }
@@ -287,7 +287,7 @@ inline cv::Ptr<cv::Feature2D> create_descriptor_extractor(char const * const ext
 
 inline
 cv::Mat extract_keypoints(
-    char const *              const  extractor_class,
+    std::string                      extractor_class,
     std::vector<cv::KeyPoint> const &keypoints,
     cv::Mat                   const &image)
 {
@@ -311,7 +311,7 @@ cv::Mat extract_keypoints(
 
 inline
 cv::Mat extract_regions(
-    char const *                  const  extractor_class,
+    std::string                          extractor_class,
     std::vector<std::vector<cv::Point>> &regions,
     cv::Mat                       const &image)
 {

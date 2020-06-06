@@ -37,6 +37,64 @@ cv::Rect roi(cv::Mat const &image)
     return cv::Rect(tl, size);
 }
 
+namespace detail {
+
+struct keypoint_detector
+{
+    keypoint_detector(std::string name) : name(name)
+    {
+    }
+
+    cv::Mat operator()(cv::Mat const &img)
+    {
+        image = img;
+        return detail::detect_keypoints(name, keypoints, image);
+    }
+    
+    cv::Mat                   image;
+    std::string               name;
+    std::vector<cv::KeyPoint> keypoints;
+};
+
+struct keypoint_extractor
+{
+    keypoint_extractor(std::string name) : name(name)
+    {
+    }
+
+    std::string name;
+};
+
+}   // namespace detail
+
+inline
+detail::keypoint_detector
+keypoints(std::string detector)
+{
+    return detail::keypoint_detector(std::move(detector));
+}
+
+inline
+detail::keypoint_extractor
+descriptors(char const * const extractor)
+{
+    return detail::keypoint_extractor(extractor);
+}
+
+inline
+detail::keypoint_detector const &operator|(cv::Mat image, detail::keypoint_detector &&detector)
+{
+    detector(image);
+    return detector;
+}
+
+inline
+cv::Mat operator|(detail::keypoint_detector const &detector, detail::keypoint_extractor const &extractor)
+{
+    return detail::extract_keypoints(extractor.name, detector.keypoints, detector.image);
+}
+
+
 inline
 std::function<cv::Mat (cv::Mat const &)>
 detect(std::string const &detector, std::vector<cv::KeyPoint> &keypoints)
