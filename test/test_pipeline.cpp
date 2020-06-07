@@ -69,12 +69,13 @@ void file_processing()
     using namespace opencv_pipeline;
     auto pngs = directory_iterator(TESTDATA_DIR "images/*.png");
     auto show_image = pipeline | show("Image") | waitkey(0);
-    pngs | show_image;
+    auto processed = pngs | show_image;
     static_assert(std::is_same<std::vector<std::filesystem::path>, decltype(pngs)>::value);
     static_assert(std::is_same<opencv_pipeline::persistent_pipeline, decltype(show_image)>::value);
+    static_assert(std::is_same<std::vector<cv::Mat>, decltype(processed)>::value);
 
-    auto images = directory_iterator(TESTDATA_DIR "images/*.png") | (foreach | show("Image") | waitkey(0));
-    static_assert(std::is_same<std::vector<cv::Mat>, decltype(images)>::value);
+    processed = directory_iterator(TESTDATA_DIR "images/*.png")
+      | (foreach | gray | mirror | show("Image") | waitkey(0));
 }
 
 void pipelines_without_assignment()

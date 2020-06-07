@@ -10,7 +10,7 @@ using pipeline_fn_t = std::function<cv::Mat (cv::Mat const &)>;
 
 struct waitkey
 {
-    explicit waitkey(int delay = 0) : delay_(delay)
+    explicit waitkey(int delay) : delay_(delay)
     {
     }
 

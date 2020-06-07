@@ -75,7 +75,7 @@ using namespace opencv_pipeline;
     | keypoints("HARRIS") | descriptors("SIFT")
     | save("harris_sift.png") | noverify;
 ```
-
+---
 ### Extracting  Features from Regions
 You want features from maximally stable regions instead of keypoints? Ok,
 ```cpp
@@ -84,9 +84,9 @@ using namespace opencv_pipeline;
     | regions("MSCR") | descriptors("SIFT")
     | save("mscr_sift.png") | noverify;
 ```
+---
 
 ### Reusing a pipeline
----
 Use `delay` to create a pipeline object to store the function objects of the pipeline.
 The pipeline can then be reused with different inputs.
 ```cpp
@@ -94,9 +94,9 @@ auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
 "monalisa.jpg" | verify | pipeline;
 "newton.jpg"   | verify | pipeline;
 ```
+---
 
 ### Parameterised pipelines
----
 Parameterising a pipeline is straightforward using a lambda function to store the pipeline,
 and call it for multiple images.
 ```cpp
@@ -115,3 +115,18 @@ pipeline("monalisa.jpg")
 pipeline("da_vinci_human11.jpg")
     | save("da_vinci_human11-harris-sift.png") | noverify;
 ```
+---
+
+### Processing files in a directory
+It's common to want to apply an image processing pipeline to all of the files in a directory.
+To do this, simply invoke the directory itertor and pipe it into a pipeline.
+
+For example, to load each PNG file in a directory, convert it to greyscale, flip it
+horizontally and wait for a keypress before displaying the next:
+```cpp
+using namespace opencv_pipeline;
+auto processed = directory_iterator("images/*.png")
+    | (foreach | gray | mirror | show("Image") | waitkey(0));
+static_assert(std::is_same<std::vector<cv::Mat>, decltype(processed)>::value);
+```
+The processed images are also returned in a vector for subsequent use.
