@@ -6,9 +6,7 @@
 
 namespace opencv_pipeline {
 
-typedef
-enum { noverify=false, verify=true }
-verify_result;
+using pipeline_fn_t = std::function<cv::Mat (cv::Mat const &)>;
 
 struct waitkey
 {
@@ -31,6 +29,11 @@ cv::Mat gray(cv::Mat const &image);         // single channel grey-scale image
 cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
 cv::Mat mirror(cv::Mat const &image);
 
+// result verification
+typedef
+enum { noverify=false, verify=true }
+verify_result;
+
 // early pipeline termination
 typedef
 enum { end }
@@ -46,12 +49,12 @@ cv::Mat operator|(cv::Mat const &image, pipeline_terminator)
 struct persistent_pipeline
 {
     persistent_pipeline() {}
-    explicit persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn);
-    persistent_pipeline &append(std::function<cv::Mat (cv::Mat const &)> &&fn);
+    explicit persistent_pipeline(pipeline_fn_t &&fn);
+    persistent_pipeline &append(pipeline_fn_t &&fn);
     cv::Mat operator()(cv::Mat &&image) const;
 
   private:
-    std::vector<std::function<cv::Mat (cv::Mat const &)>> fn_;
+    std::vector<pipeline_fn_t> fn_;
 };
 
 }   // namespace opencv_pipeline

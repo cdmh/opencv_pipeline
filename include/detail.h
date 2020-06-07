@@ -19,10 +19,7 @@ cv::Mat subtract(cv::Mat const &image1, cv::Mat const &image2);
 cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type);
 
 // conditions
-cv::Mat if_(
-    cv::Mat                              const &image,
-    std::function<bool const (cv::Mat const &)> cond,
-    std::function<cv::Mat (cv::Mat const &)>    fn);
+cv::Mat if_(cv::Mat const &image, std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn);
 
 // attributes
 bool const channels(cv::Mat const &image, int num);

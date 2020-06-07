@@ -9,14 +9,14 @@ cv::Mat load(std::filesystem::path pathname)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 save(std::filesystem::path pathname)
 {
     return std::bind(detail::save, std::placeholders::_1, pathname);
 }
 
 inline
-std::function<cv::Mat const &(cv::Mat const &)>
+pipeline_fn_t
 show(char const * const window_name)
 {
     return std::bind(detail::show, window_name, std::placeholders::_1);
@@ -193,7 +193,7 @@ cv::Mat operator|(cv::Mat const &left, cv::Mat(*right)(cv::Mat const &))
 
 // apply a function to an image - enables std::bind() bound parameters
 inline
-cv::Mat operator|(cv::Mat const &left, std::function<cv::Mat(cv::Mat const &)> const &right)
+cv::Mat operator|(cv::Mat const &left, pipeline_fn_t const &right)
 {
     return right(left);
 }
@@ -232,7 +232,7 @@ cv::Mat operator|(cv::Mat const &image, verify_result verify)
 //
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 color_space(int code)
 {
     using namespace std::placeholders;
@@ -240,7 +240,7 @@ color_space(int code)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 convert(int type, double alpha=1.0, double beta=0.0)
 {
     using namespace std::placeholders;
@@ -248,7 +248,7 @@ convert(int type, double alpha=1.0, double beta=0.0)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 dilate(int dx, int dy)
 {
     using namespace std::placeholders;
@@ -256,7 +256,7 @@ dilate(int dx, int dy)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 erode(int dx, int dy)
 {
     using namespace std::placeholders;
@@ -264,7 +264,7 @@ erode(int dx, int dy)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 gaussian_blur(int dx, int dy, double sigmaX=0.0, double sigmaY=0.0, int border=cv::BORDER_DEFAULT)
 {
     using namespace std::placeholders;
@@ -299,7 +299,7 @@ cv::Mat mirror(cv::Mat const &image)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 sobel(int dx, int dy, int ksize=3, double scale=1, double delta=0, int border=cv::BORDER_DEFAULT)
 {
     using namespace std::placeholders;
@@ -307,7 +307,7 @@ sobel(int dx, int dy, int ksize=3, double scale=1, double delta=0, int border=cv
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 subtract(cv::Mat const &other)
 {
     using namespace std::placeholders;
@@ -315,7 +315,7 @@ subtract(cv::Mat const &other)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
+pipeline_fn_t
 threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OTSU)
 {
     using namespace std::placeholders;
@@ -335,29 +335,23 @@ cv::Mat noop(cv::Mat const &image)
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
-if_(
-    std::function<bool const (cv::Mat const &)> cond,
-    std::function<cv::Mat (cv::Mat const &)>    fn)
+pipeline_fn_t
+if_(std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn)
 {
     using namespace std::placeholders;
     return std::bind(detail::if_, _1, cond, fn);
 }
 
 inline
-std::function<cv::Mat (cv::Mat const &)>
-if_(
-    bool const cond,
-    std::function<cv::Mat (cv::Mat const &)> fn)
+pipeline_fn_t
+if_(bool const cond, pipeline_fn_t fn)
 {
     return cond? fn : noop;
 }
 
 inline
 persistent_pipeline
-if_(
-    bool const cond,
-    persistent_pipeline pipeline)
+if_(bool const cond, persistent_pipeline pipeline)
 {
     return cond? pipeline : persistent_pipeline();
 }
@@ -432,47 +426,33 @@ camera(int device)
 //
 
 inline
-std::pair<
-    video_pipeline &,
-    std::function<cv::Mat (cv::Mat const &)>>
+std::pair<video_pipeline &, pipeline_fn_t>
 operator|(
     video_pipeline &lhs,
-    std::function<cv::Mat (cv::Mat const &)> const &rhs)
+    pipeline_fn_t const &rhs)
 {
     return {lhs,rhs};
 }
 
 inline
-std::pair<
-    video_pipeline &,
-    std::function<cv::Mat (cv::Mat const &)>>
-operator|(
-    video_pipeline &lhs,
-    cv::Mat (*rhs)(cv::Mat const &))
+std::pair<video_pipeline &, pipeline_fn_t>
+operator|(video_pipeline &lhs, cv::Mat (*rhs)(cv::Mat const &))
 {
     return {lhs,rhs};
 }
 
 // pipe directly into a function
 template<typename LHS, typename RHS>
-std::pair<
-    std::pair<LHS, RHS>,
-    std::function<cv::Mat (cv::Mat const &)>>
-operator|(
-    std::pair<LHS, RHS> lhs,
-    cv::Mat(*rhs)(cv::Mat const &))
+std::pair<std::pair<LHS, RHS>, pipeline_fn_t>
+operator|(std::pair<LHS, RHS> lhs, cv::Mat(*rhs)(cv::Mat const &))
 {
     return {lhs, rhs};
 }
 
 // pipe into a bound function (std::bind)
 template<typename LHS, typename RHS>
-std::pair<
-    std::pair<LHS, RHS>,
-    std::function<cv::Mat (cv::Mat const &)>>
-operator|(
-    std::pair<LHS, RHS> lhs,
-    std::function<cv::Mat (cv::Mat const &)> const &rhs)
+std::pair<std::pair<LHS, RHS>, pipeline_fn_t>
+operator|(std::pair<LHS, RHS> lhs, pipeline_fn_t const &rhs)
 {
     return {lhs, rhs};
 }

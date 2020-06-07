@@ -7,15 +7,15 @@ enum { pipeline=1, foreach }
 delay_result;
 
 inline
-persistent_pipeline::persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn)
+persistent_pipeline::persistent_pipeline(pipeline_fn_t &&fn)
 {
-    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
+    fn_.push_back(std::forward<pipeline_fn_t>(fn));
 }
 
 inline
-persistent_pipeline &persistent_pipeline::append(std::function<cv::Mat (cv::Mat const &)> &&fn)
+persistent_pipeline &persistent_pipeline::append(pipeline_fn_t &&fn)
 {
-    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
+    fn_.push_back(std::forward<pipeline_fn_t>(fn));
     return *this;
 }
 
@@ -29,7 +29,7 @@ cv::Mat persistent_pipeline::operator()(cv::Mat &&image) const
 
 // pipeline a persistent pipeline
 inline
-persistent_pipeline operator|(delay_result, std::function<cv::Mat (cv::Mat const &)> rhs)
+persistent_pipeline operator|(delay_result, pipeline_fn_t rhs)
 {
     return persistent_pipeline(std::move(rhs));
 }
@@ -49,13 +49,13 @@ cv::Mat operator|(cv::Mat lhs, persistent_pipeline const &rhs)
 
 // construct pipes
 inline
-persistent_pipeline operator|(persistent_pipeline lhs, std::function<cv::Mat (cv::Mat const &)> rhs)
+persistent_pipeline operator|(persistent_pipeline lhs, pipeline_fn_t rhs)
 {
     return lhs.append(std::move(rhs));
 }
 
 inline
-persistent_pipeline operator|(std::function<cv::Mat (cv::Mat const &)> lhs, persistent_pipeline rhs)
+persistent_pipeline operator|(pipeline_fn_t lhs, persistent_pipeline rhs)
 {
     return persistent_pipeline(std::move(lhs));
 }

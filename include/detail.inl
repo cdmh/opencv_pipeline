@@ -96,10 +96,7 @@ cv::Mat threshold(cv::Mat const &image, double thresh, double maxval, int type)
 //
 
 inline
-cv::Mat if_(
-    cv::Mat                              const &image,
-    std::function<bool const (cv::Mat const &)> cond,
-    std::function<cv::Mat (cv::Mat const &)>    fn)
+cv::Mat if_(cv::Mat const &image, std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn)
 {
     return cond(image)? fn(image) : image;
 }
