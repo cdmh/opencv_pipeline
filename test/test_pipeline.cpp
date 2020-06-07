@@ -4,7 +4,7 @@
 namespace { // anonymous namespace
 
 #define TESTDATA_DIR "D:/QMUL/test data/"
-char const * const test_file = TESTDATA_DIR "images/monalisa.jpg";
+std::filesystem::path test_file = TESTDATA_DIR "images/monalisa.jpg";
 
 void detect_features()
 {
@@ -71,15 +71,14 @@ void pipelines_without_assignment()
     test_file | verify;
     test_file | verify | gray_bgr | verify | mirror | save("result1.png");
     test_file | verify | gray_bgr | mirror | save("result2.png") | verify;
-    std::string(test_file) | verify | gray_bgr | mirror | save("result3.png") | noverify;
 }
 
 void reuse_pipeline()
 {
     using namespace opencv_pipeline;
 
-    auto pipeline = [](char const * const filename)->cv::Mat {
-            return filename | verify | gray_bgr | mirror;
+    auto pipeline = [](std::filesystem::path pathname)->cv::Mat {
+            return pathname | verify | gray_bgr | mirror;
         };
 
     pipeline(test_file)
@@ -246,10 +245,11 @@ void exhaustive()
 #endif
 
     // loading an image
-    auto img = cv::imread(test_file) | verify | mirror;
+    auto img = cv::imread(test_file.u8string()) | verify | mirror;
     img = img | gray_bgr;
     img = load(test_file) | gray_bgr | mirror;
     img = test_file | verify | gray_bgr | mirror;
+    static_assert(std::is_same<cv::Mat, decltype(img)>::value);
 
     pipelines_without_assignment();
     detect_features();

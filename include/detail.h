@@ -61,7 +61,7 @@ cv::Mat extract_regions(
     std::vector<std::vector<cv::Point>> const &regions,
     cv::Mat                             const &image);
 
-cv::Mat        save(char const * const pathname, cv::Mat const &image);
+cv::Mat        save(cv::Mat const &image, std::filesystem::path pathname);
 cv::Mat const &show(char const * const window_name, cv::Mat const &image);
 
 }   // namespace detail

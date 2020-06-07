@@ -3,22 +3,16 @@
 namespace opencv_pipeline {
 
 inline
-cv::Mat load(char const * const pathname)
+cv::Mat load(std::filesystem::path pathname)
 {
-    return cv::imread(pathname);
-}
-
-inline
-cv::Mat load(std::string const &pathname)
-{
-    return cv::imread(pathname);
+    return cv::imread(pathname.u8string());
 }
 
 inline
 std::function<cv::Mat (cv::Mat const &)>
-save(char const * const pathname)
+save(std::filesystem::path pathname)
 {
-    return std::bind(detail::save, pathname, std::placeholders::_1);
+    return std::bind(detail::save, std::placeholders::_1, pathname);
 }
 
 inline
@@ -214,20 +208,11 @@ cv::Mat operator|(cv::Mat const &left, cv::MatExpr(*right)(cv::Mat const &))
 // go between a load and any subsequent manipulations through the
 // pipeline interface
 inline
-cv::Mat operator|(char const * const pathname, verify_result verify)
+cv::Mat operator|(std::filesystem::path pathname, verify_result verify)
 {
     cv::Mat image = load(pathname);
     if (verify  &&  image.empty())
         throw exceptions::file_not_found(pathname);
-    return image;
-}
-
-inline
-cv::Mat operator|(std::string const pathname, verify_result verify)
-{
-    cv::Mat image = load(pathname);
-    if (verify  &&  image.empty())
-        throw exceptions::file_not_found(pathname.c_str());
     return image;
 }
 
@@ -398,15 +383,11 @@ class video_pipeline
     {
        capture_.open(device);
     }
+    video_pipeline(video_pipeline &&) = default;
 
-    video_pipeline(std::string const &pathname)
+    video_pipeline(std::filesystem::path pathname)
     {
-       capture_.open(pathname);
-    }
-
-    video_pipeline(char const * const pathname)
-      : video_pipeline(std::string(pathname))
-    {
+       capture_.open(pathname.u8string());
     }
 
     cv::Mat next_frame()
@@ -419,7 +400,6 @@ class video_pipeline
     }
 
     video_pipeline()                                  = delete;
-    video_pipeline(video_pipeline &&)                 = default;
     video_pipeline(video_pipeline const &)            = delete;
     video_pipeline &operator=(video_pipeline &&)      = delete;
     video_pipeline &operator=(video_pipeline const &) = delete;
@@ -431,15 +411,7 @@ class video_pipeline
 // capture video from a file
 inline
 video_pipeline
-video(char const * const pathname)
-{
-    return video_pipeline(pathname);
-}
-
-// capture video from a file
-inline
-video_pipeline
-video(std::string const pathname)
+video(std::filesystem::path pathname)
 {
     return video_pipeline(pathname);
 }

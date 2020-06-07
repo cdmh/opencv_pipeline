@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include "exceptions.h"
 #include <functional>
 
@@ -25,14 +26,6 @@ struct waitkey
     int const delay_;
 };
 
-// image loading
-cv::Mat load(char const * const pathname);
-cv::Mat load(std::string const &pathname);
-
-// save an image
-std::function<cv::Mat (cv::Mat const &)>
-save(char const * const pathname);
-
 // image manipulation
 cv::Mat gray(cv::Mat const &image);         // single channel grey-scale image
 cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
@@ -45,9 +38,9 @@ pipeline_terminator;
 
 // never required, but here for completeness
 inline
-cv::Mat operator|(cv::Mat const &img, pipeline_terminator)
+cv::Mat operator|(cv::Mat const &image, pipeline_terminator)
 {
-    return img;
+    return image;
 }
 
 }   // namespace opencv_pipeline

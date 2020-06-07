@@ -13,6 +13,11 @@ class file_not_found : public std::runtime_error
       : runtime_error(pathname)
     {
     }
+
+    file_not_found(std::filesystem::path pathname)
+      : file_not_found(pathname.u8string().c_str())
+    {
+    }
 };
 
 class bad_image : public std::runtime_error

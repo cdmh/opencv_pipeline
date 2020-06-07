@@ -319,9 +319,9 @@ cv::Mat extract_regions(
 }
 
 inline
-cv::Mat save(char const * const pathname, cv::Mat const &image)
+cv::Mat save(cv::Mat const &image, std::filesystem::path pathname)
 {
-    return imwrite(pathname, image)? image : cv::Mat();
+    return imwrite(pathname.u8string(), image)? image : cv::Mat();
 }
 
 inline
