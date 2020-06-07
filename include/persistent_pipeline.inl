@@ -21,7 +21,7 @@ detail::persistent_pipeline operator|(delay_result, cv::Mat (*rhs)(cv::Mat const
 
 // run a persistent_pipeline
 inline
-cv::Mat operator|(cv::Mat lhs, detail::persistent_pipeline rhs)
+cv::Mat operator|(cv::Mat lhs, detail::persistent_pipeline const &rhs)
 {
     return rhs(std::move(lhs));
 }
@@ -50,5 +50,32 @@ detail::persistent_pipeline operator|(cv::Mat (*lhs)(cv::Mat const &), detail::p
 {
     return rhs.append(lhs);
 }
+
+
+// get a list files in a directory that match a wildcard
+inline
+std::vector<std::filesystem::path>
+directory_iterator(std::filesystem::path pathname)
+{
+    std::vector<cv::String> results;
+    cv::glob(pathname.u8string(), results, false);
+
+    std::vector<std::filesystem::path> pathnames;
+    for (auto const &result : results)
+        pathnames.emplace_back(result.c_str());
+    return pathnames;
+}
+
+inline
+std::vector<cv::Mat>
+operator|(std::vector<std::filesystem::path> const &pathnames,
+          detail::persistent_pipeline        const &pipeline)
+{
+    std::vector<cv::Mat> processed;
+    for (auto const &pathname : pathnames)
+        processed.emplace_back(pathname | verify | pipeline);
+    return processed;
+}
+
 
 }   // namespace opencv_pipeline

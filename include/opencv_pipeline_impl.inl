@@ -59,6 +59,7 @@ struct feature_detector
 };
 
 template<>
+inline
 cv::Mat feature_detector<cv::KeyPoint>::operator()(cv::Mat const &img)
 {
     image = img;
@@ -66,6 +67,7 @@ cv::Mat feature_detector<cv::KeyPoint>::operator()(cv::Mat const &img)
 }
 
 template<>
+inline
 cv::Mat feature_detector<std::vector<cv::Point>>::operator()(cv::Mat const &img)
 {
     image = img;

@@ -64,6 +64,12 @@ void detect_features()
     }
 }
 
+void file_processing()
+{
+    using namespace opencv_pipeline;
+    directory_iterator(TESTDATA_DIR "images/*.png") | (delay | show("Image") | waitkey(0));
+}
+
 void pipelines_without_assignment()
 {
     using namespace opencv_pipeline;
@@ -251,6 +257,7 @@ void exhaustive()
     img = test_file | verify | gray_bgr | mirror;
     static_assert(std::is_same<cv::Mat, decltype(img)>::value);
 
+    file_processing();
     pipelines_without_assignment();
     detect_features();
     reuse_pipeline();
@@ -260,61 +267,10 @@ void exhaustive()
 
 }   // anonymous namespace
 
-
 namespace examples {
-
-void extract_descriptors_from_keypoints()
-{
-    using namespace opencv_pipeline;
-    TESTDATA_DIR "images/monalisa.jpg" | verify
-        | gray
-        | keypoints("HARRIS") | descriptors("SIFT")
-        | save("harris_sift.png") | noverify;
-}
-
-void extract_descriptors_from_regions()
-{
-    using namespace opencv_pipeline;
-    TESTDATA_DIR "images/monalisa.jpg" | verify
-        | regions("MSCR") | descriptors("SIFT")
-        | save("mscr_sift.png") | noverify;
-}
-
-void reuse_pipeline()
-{
-    using namespace opencv_pipeline;
-    auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
-    TESTDATA_DIR "images/monalisa.jpg"                    | verify | pipeline;
-    TESTDATA_DIR "images/african-art-1732250_960_720.jpg" | verify | pipeline;
-}
-
-void parameterised_pipeline()
-{
-    using namespace opencv_pipeline;
-    auto pipeline = [](char const * const filename)->cv::Mat {
-        return
-            filename| verify
-                | gray
-                | keypoints("HARRIS")
-                | descriptors("SIFT");
-    };
-
-    pipeline(TESTDATA_DIR "images/monalisa.jpg")
-        | save("monalisa-harris-sift.jpg") | noverify;
-
-    pipeline(TESTDATA_DIR "images/da_vinci_human11.jpg")
-        | save("da_vinci_human11-harris-sift.png") | noverify;
-}
-
-void run()
-{
-    extract_descriptors_from_keypoints();
-    extract_descriptors_from_regions();
-    reuse_pipeline();
-    parameterised_pipeline();
-}
-
+void run();
 }   // namespace examples
+
 
 extern "C" int __stdcall IsDebuggerPresent(void);
 int main(int /*argc*/, char * /*argv*/[])
@@ -329,7 +285,7 @@ int main(int /*argc*/, char * /*argv*/[])
     cv::initModule_nonfree();
 #endif
 
-    examples::run();
     exhaustive();
+    examples::run();
 	return 0;
 }

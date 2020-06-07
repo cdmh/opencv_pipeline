@@ -30,9 +30,6 @@
     <ClInclude Include="..\include\opencv_pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\persistent_pipeline.inl">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -41,11 +38,17 @@
     <ClCompile Include="test_pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\examples.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\detail.inl">
       <Filter>Header Files</Filter>
     </None>
     <None Include="..\readme.md" />
+    <None Include="..\include\persistent_pipeline.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
