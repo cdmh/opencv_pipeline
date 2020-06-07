@@ -26,9 +26,9 @@ void extract_descriptors_from_regions()
 void reuse_pipeline()
 {
     using namespace opencv_pipeline;
-    auto pipeline = delay | gray | mirror | show("Image") | waitkey(0);
-    TESTDATA_DIR "images/monalisa.jpg"                    | verify | pipeline;
-    TESTDATA_DIR "images/african-art-1732250_960_720.jpg" | verify | pipeline;
+    auto show_grey_mirrored = pipeline | gray | mirror | show("Image") | waitkey(0);
+    TESTDATA_DIR "images/monalisa.jpg"                    | verify | show_grey_mirrored;
+    TESTDATA_DIR "images/african-art-1732250_960_720.jpg" | verify | show_grey_mirrored;
 }
 
 void parameterised_pipeline()

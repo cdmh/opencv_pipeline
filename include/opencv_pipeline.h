@@ -43,6 +43,17 @@ cv::Mat operator|(cv::Mat const &image, pipeline_terminator)
     return image;
 }
 
+struct persistent_pipeline
+{
+    persistent_pipeline() {}
+    explicit persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn);
+    persistent_pipeline &append(std::function<cv::Mat (cv::Mat const &)> &&fn);
+    cv::Mat operator()(cv::Mat &&image) const;
+
+  private:
+    std::vector<std::function<cv::Mat (cv::Mat const &)>> fn_;
+};
+
 }   // namespace opencv_pipeline
 
 #include "detail.h"

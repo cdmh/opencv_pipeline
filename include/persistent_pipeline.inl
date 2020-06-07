@@ -3,50 +3,71 @@
 namespace opencv_pipeline {
 
 typedef
-enum { delay=true }
+enum { pipeline=1, foreach }
 delay_result;
 
-// create a persistent pipeline
 inline
-detail::persistent_pipeline operator|(delay_result, std::function<cv::Mat (cv::Mat const &)> rhs)
+persistent_pipeline::persistent_pipeline(std::function<cv::Mat (cv::Mat const &)> &&fn)
 {
-    return detail::persistent_pipeline(std::move(rhs));
+    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
 }
 
 inline
-detail::persistent_pipeline operator|(delay_result, cv::Mat (*rhs)(cv::Mat const &))
+persistent_pipeline &persistent_pipeline::append(std::function<cv::Mat (cv::Mat const &)> &&fn)
 {
-    return detail::persistent_pipeline(rhs);
+    fn_.push_back(std::forward<std::function<cv::Mat (cv::Mat const &)>>(fn));
+    return *this;
+}
+
+inline
+cv::Mat persistent_pipeline::operator()(cv::Mat &&image) const
+{
+    for (auto &fn : fn_)
+        image = fn(image);
+    return image;
+}
+
+// pipeline a persistent pipeline
+inline
+persistent_pipeline operator|(delay_result, std::function<cv::Mat (cv::Mat const &)> rhs)
+{
+    return persistent_pipeline(std::move(rhs));
+}
+
+inline
+persistent_pipeline operator|(delay_result, cv::Mat (*rhs)(cv::Mat const &))
+{
+    return persistent_pipeline(rhs);
 }
 
 // run a persistent_pipeline
 inline
-cv::Mat operator|(cv::Mat lhs, detail::persistent_pipeline const &rhs)
+cv::Mat operator|(cv::Mat lhs, persistent_pipeline const &rhs)
 {
     return rhs(std::move(lhs));
 }
 
 // construct pipes
 inline
-detail::persistent_pipeline operator|(detail::persistent_pipeline lhs, std::function<cv::Mat (cv::Mat const &)> rhs)
+persistent_pipeline operator|(persistent_pipeline lhs, std::function<cv::Mat (cv::Mat const &)> rhs)
 {
     return lhs.append(std::move(rhs));
 }
 
 inline
-detail::persistent_pipeline operator|(std::function<cv::Mat (cv::Mat const &)> lhs, detail::persistent_pipeline rhs)
+persistent_pipeline operator|(std::function<cv::Mat (cv::Mat const &)> lhs, persistent_pipeline rhs)
 {
-    return detail::persistent_pipeline(std::move(lhs));
+    return persistent_pipeline(std::move(lhs));
 }
 
 inline
-detail::persistent_pipeline operator|(detail::persistent_pipeline lhs, cv::Mat (*rhs)(cv::Mat const &))
+persistent_pipeline operator|(persistent_pipeline lhs, cv::Mat (*rhs)(cv::Mat const &))
 {
     return lhs.append(rhs);
 }
 
 inline
-detail::persistent_pipeline operator|(cv::Mat (*lhs)(cv::Mat const &), detail::persistent_pipeline rhs)
+persistent_pipeline operator|(cv::Mat (*lhs)(cv::Mat const &), persistent_pipeline rhs)
 {
     return rhs.append(lhs);
 }
@@ -69,7 +90,7 @@ directory_iterator(std::filesystem::path pathname)
 inline
 std::vector<cv::Mat>
 operator|(std::vector<std::filesystem::path> const &pathnames,
-          detail::persistent_pipeline        const &pipeline)
+          persistent_pipeline        const &pipeline)
 {
     std::vector<cv::Mat> processed;
     for (auto const &pathname : pathnames)

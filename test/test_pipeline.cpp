@@ -67,7 +67,14 @@ void detect_features()
 void file_processing()
 {
     using namespace opencv_pipeline;
-    directory_iterator(TESTDATA_DIR "images/*.png") | (delay | show("Image") | waitkey(0));
+    auto pngs = directory_iterator(TESTDATA_DIR "images/*.png");
+    auto show_image = pipeline | show("Image") | waitkey(0);
+    pngs | show_image;
+    static_assert(std::is_same<std::vector<std::filesystem::path>, decltype(pngs)>::value);
+    static_assert(std::is_same<opencv_pipeline::persistent_pipeline, decltype(show_image)>::value);
+
+    auto images = directory_iterator(TESTDATA_DIR "images/*.png") | (foreach | show("Image") | waitkey(0));
+    static_assert(std::is_same<std::vector<cv::Mat>, decltype(images)>::value);
 }
 
 void pipelines_without_assignment()
@@ -132,7 +139,7 @@ cv::Mat preprocess_license_plate(cv::Mat const &src)
          | dilate(3, 9)                          // closing
          | erode(3, 9)
          | convert(CV_8UC1)
-         | threshold(0., 255.);                  // create binary image
+         | threshold(0., 255.);                  // pipeline binary image
 }
 
 void license_plate()

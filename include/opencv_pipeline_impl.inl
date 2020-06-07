@@ -354,12 +354,12 @@ if_(
 }
 
 inline
-detail::persistent_pipeline
+persistent_pipeline
 if_(
     bool const cond,
-    detail::persistent_pipeline pipeline)
+    persistent_pipeline pipeline)
 {
-    return cond? pipeline : detail::persistent_pipeline();
+    return cond? pipeline : persistent_pipeline();
 }
 
 
