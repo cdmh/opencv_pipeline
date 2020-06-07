@@ -90,12 +90,24 @@ directory_iterator(std::filesystem::path pathname)
 inline
 std::vector<cv::Mat>
 operator|(std::vector<std::filesystem::path> const &pathnames,
-          persistent_pipeline        const &pipeline)
+          persistent_pipeline                const &pipeline)
 {
-    std::vector<cv::Mat> processed;
+    std::vector<cv::Mat> results;
     for (auto const &pathname : pathnames)
-        processed.emplace_back(pathname | verify | pipeline);
-    return processed;
+        results.emplace_back(pathname | verify | pipeline);
+    return results;
+}
+
+template<size_t N>
+std::array<cv::Mat, N>
+operator|(std::array<std::filesystem::path, N> const &pathnames,
+          persistent_pipeline                  const &pipeline)
+{
+    std::array<cv::Mat, N> results;
+    auto result = results.begin();
+    for (auto const &pathname : pathnames)
+        *result++ = pathname | verify | pipeline;
+    return results;
 }
 
 

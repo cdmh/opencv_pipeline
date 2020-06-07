@@ -3,6 +3,8 @@
 #include <filesystem>
 #include "exceptions.h"
 #include <functional>
+#include <array>
+#include <vector>
 
 namespace opencv_pipeline {
 

@@ -69,13 +69,37 @@ void file_processing()
     using namespace opencv_pipeline;
     auto pngs = directory_iterator(TESTDATA_DIR "images/*.png");
     auto show_image = pipeline | show("Image") | waitkey(0);
-    auto processed = pngs | show_image;
+    auto images = pngs | show_image;
     static_assert(std::is_same<std::vector<std::filesystem::path>, decltype(pngs)>::value);
     static_assert(std::is_same<opencv_pipeline::persistent_pipeline, decltype(show_image)>::value);
-    static_assert(std::is_same<std::vector<cv::Mat>, decltype(processed)>::value);
+    static_assert(std::is_same<std::vector<cv::Mat>, decltype(images)>::value);
 
-    processed = directory_iterator(TESTDATA_DIR "images/*.png")
+    images = directory_iterator(TESTDATA_DIR "images/*.png")
       | (foreach | gray | mirror | show("Image") | waitkey(0));
+}
+
+void list_processing()
+{
+    using namespace opencv_pipeline;
+    using namespace opencv_pipeline::array;
+
+    auto pipeline = foreach | gray | sobel(5, 5, 7) | show("Image") | waitkey(0);
+    {
+        auto files = (std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg"),
+                      std::filesystem::path(TESTDATA_DIR "images/rgb.png"),
+                      std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg"));
+        static_assert(std::is_same<std::array<std::filesystem::path, 3>, decltype(files)>::value);
+
+        auto images = files | pipeline;
+        static_assert(std::is_same<std::array<cv::Mat, 3>, decltype(images)>::value);
+    }
+
+    {
+        auto images = ((std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg") | verify | pipeline),
+                       (std::filesystem::path(TESTDATA_DIR "images/rgb.png")                         | verify | pipeline),
+                       (std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg"))           | verify | pipeline);
+        static_assert(std::is_same<std::array<cv::Mat, 3>, decltype(images)>::value);
+    }
 }
 
 void pipelines_without_assignment()
@@ -265,6 +289,7 @@ void exhaustive()
     img = test_file | verify | gray_bgr | mirror;
     static_assert(std::is_same<cv::Mat, decltype(img)>::value);
 
+    list_processing();
     file_processing();
     pipelines_without_assignment();
     detect_features();
