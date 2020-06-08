@@ -110,5 +110,22 @@ operator|(std::array<std::filesystem::path, N> const &pathnames,
     return results;
 }
 
+template<typename T>
+std::vector<cv::Mat>
+operator|(std::initializer_list<T> const &list,
+          persistent_pipeline      const &pipeline)
+{
+    std::vector<cv::Mat> results;
+    auto result = back_inserter(results);
+    for (auto const &item : list)
+    {
+        if constexpr (std::is_same<T, std::filesystem::path>::value)
+            *result++ = item | verify | pipeline;
+        else
+            *result++ = item | pipeline;
+    }
+    return results;
+}
+
 
 }   // namespace opencv_pipeline

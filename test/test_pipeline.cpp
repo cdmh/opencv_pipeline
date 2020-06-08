@@ -81,24 +81,28 @@ void file_processing()
 void list_processing()
 {
     using namespace opencv_pipeline;
-    using namespace opencv_pipeline::array;
 
     auto pipeline = foreach | gray | sobel(5, 5, 7) | show("Image") | waitkey(0);
     {
-        auto files = (std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg"),
-                      std::filesystem::path(TESTDATA_DIR "images/rgb.png"),
-                      std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg"));
-        static_assert(std::is_same<std::array<std::filesystem::path, 3>, decltype(files)>::value);
+        auto files = { std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg"),
+                       std::filesystem::path(TESTDATA_DIR "images/rgb.png"),
+                       std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg") };
 
         auto images = files | pipeline;
-        static_assert(std::is_same<std::array<cv::Mat, 3>, decltype(images)>::value);
+        static_assert(std::is_same<std::vector<cv::Mat>, decltype(images)>::value);
+        assert(images.size() == 3);
     }
 
     {
-        auto images = ((std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg") | verify | pipeline),
-                       (std::filesystem::path(TESTDATA_DIR "images/rgb.png")                         | verify | pipeline),
-                       (std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg"))           | verify | pipeline);
-        static_assert(std::is_same<std::array<cv::Mat, 3>, decltype(images)>::value);
+        auto src = { std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg") | verify,
+                     std::filesystem::path(TESTDATA_DIR "images/rgb.png")                         | verify,
+                     std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg")            | verify };
+        static_assert(std::is_same<std::initializer_list<cv::Mat>, decltype(src)>::value);
+        assert(src.size() == 3);
+
+        auto dst = src | pipeline;
+        static_assert(std::is_same<std::vector<cv::Mat>, decltype(dst)>::value);
+        assert(dst.size() == 3);
     }
 }
 

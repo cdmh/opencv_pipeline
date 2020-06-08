@@ -492,36 +492,4 @@ operator|(std::pair<LHS, RHS> lhs, video_pipeline_terminator)
 }
 #pragma warning(pop)
 
-
-//
-// lists
-//
-// use another level of namespace to avoid collision overloading the comma operator
-namespace array {
-
-template<typename T>
-inline
-std::array<T, 2>
-operator,(T lhs, T rhs)
-{
-    std::array<T, 2> result;
-    result[0] = std::move(lhs);
-    result[1] = std::move(rhs);
-    return result;
-}
-
-template<typename T, size_t N>
-inline
-std::array<T, N+1>
-operator,(std::array<T, N> &&lhs, T rhs)
-{
-    std::array<T, N+1> result;
-    std::move(lhs.begin(), lhs.end(), result.begin());
-    result[N] = std::move(rhs);
-    return result;
-}
-
-}   // namespace list
-
-
 }   // namespace opencv_pipeline
