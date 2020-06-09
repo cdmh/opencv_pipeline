@@ -1,5 +1,17 @@
 #pragma once
 
+//opencv
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#if CV_MAJOR_VERSION==2
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#elif CV_MAJOR_VERSION==3
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#endif
+
 #include <filesystem>
 #include "exceptions.h"
 #include <functional>
@@ -16,14 +28,21 @@ struct waitkey
     {
     }
 
+    waitkey(int delay, std::function<void (int)> fn) : delay_(delay), fn_(fn)
+    {
+    }
+
     cv::Mat const &operator()(cv::Mat const &src) const
     {
-        cvWaitKey(delay_);
+        auto key = cv::waitKey(delay_);
+        if (fn_) fn_(key);
+
         return src;
     }
 
   private:
     int const delay_;
+    std::function<void (int)> fn_;
 };
 
 // image manipulation
@@ -33,8 +52,8 @@ cv::Mat mirror(cv::Mat const &image);
 
 // result verification
 typedef
-enum { noverify=false, verify=true }
-verify_result;
+enum { load_ignore_failure=false, load=true }
+image_loader;
 
 // early pipeline termination
 typedef

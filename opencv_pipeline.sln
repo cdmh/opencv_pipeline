@@ -5,22 +5,22 @@ VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencv_pipeline", "test\opencv_pipeline.vcxproj", "{19FEB92D-39BA-46F6-B4A0-4C314794649E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "samples", "samples\samples.vcxproj", "{16BEA8B7-404C-4F32-94FC-5AE6188CF54A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		CV24Debug|x64 = CV24Debug|x64
-		CV24Release|x64 = CV24Release|x64
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.CV24Debug|x64.ActiveCfg = CV24Debug|x64
-		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.CV24Debug|x64.Build.0 = CV24Debug|x64
-		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.CV24Release|x64.ActiveCfg = CV24Release|x64
-		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.CV24Release|x64.Build.0 = CV24Release|x64
 		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.Debug|x64.ActiveCfg = Debug|x64
 		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.Debug|x64.Build.0 = Debug|x64
 		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.Release|x64.ActiveCfg = Release|x64
 		{19FEB92D-39BA-46F6-B4A0-4C314794649E}.Release|x64.Build.0 = Release|x64
+		{16BEA8B7-404C-4F32-94FC-5AE6188CF54A}.Debug|x64.ActiveCfg = Debug|x64
+		{16BEA8B7-404C-4F32-94FC-5AE6188CF54A}.Debug|x64.Build.0 = Debug|x64
+		{16BEA8B7-404C-4F32-94FC-5AE6188CF54A}.Release|x64.ActiveCfg = Release|x64
+		{16BEA8B7-404C-4F32-94FC-5AE6188CF54A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

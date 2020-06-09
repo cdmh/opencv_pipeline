@@ -3,9 +3,9 @@
 namespace opencv_pipeline {
 
 inline
-cv::Mat load(std::filesystem::path pathname)
+cv::Mat load_image(std::filesystem::path pathname, int flags=cv::IMREAD_COLOR)
 {
-    return cv::imread(pathname.u8string());
+    return cv::imread(pathname.u8string(), flags);
 }
 
 inline
@@ -125,7 +125,7 @@ detail::feature_detector<cv::KeyPoint> operator|(std::vector<cv::KeyPoint> const
 }
 
 // enable early pipeline to detect features without extracting descriptors
-// e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
+// e.g. auto kps = test_file | load | gray_bgr | features("HARRIS") | end;
 //      static_assert(std::is_same<std::vector<cv::KeyPoint>, decltype(kps)>::value);
 inline
 std::vector<cv::KeyPoint> operator|(detail::feature_detector<cv::KeyPoint> const &detector, pipeline_terminator)
@@ -166,7 +166,7 @@ detail::feature_detector<std::vector<cv::Point>> operator|(std::vector<std::vect
 }
 
 // enable early pipeline to detect features without extracting descriptors
-// e.g. auto kps = test_file | verify | gray_bgr | features("HARRIS") | end;
+// e.g. auto kps = test_file | load | gray_bgr | features("HARRIS") | end;
 //      static_assert(std::is_same<std::vector<std::vector<cv::KeyPoint>>, decltype(kps)>::value);
 inline
 std::vector<std::vector<cv::Point>> operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, pipeline_terminator)
@@ -203,28 +203,6 @@ inline
 cv::Mat operator|(cv::Mat const &left, cv::MatExpr(*right)(cv::Mat const &))
 {
     return right(left);
-}
-
-// load an image with optional verification.
-// whether or not to verify is compulsory -- verify or noverify must
-// go between a load and any subsequent manipulations through the
-// pipeline interface
-inline
-cv::Mat operator|(std::filesystem::path pathname, verify_result verify)
-{
-    cv::Mat image = load(pathname);
-    if (verify  &&  image.empty())
-        throw exceptions::file_not_found(pathname);
-    return image;
-}
-
-// verify an image is not empty
-inline
-cv::Mat operator|(cv::Mat const &image, verify_result verify)
-{
-    if (verify  &&  image.empty())
-        throw exceptions::bad_image();
-    return image;
 }
 
 //
@@ -275,6 +253,12 @@ inline
 cv::Mat gray(cv::Mat const &image)
 {
     return image | color_space(cv::COLOR_BGR2GRAY);
+}
+
+inline
+cv::Mat clone(cv::Mat const &image)
+{
+    return image.clone();
 }
 
 inline
@@ -335,6 +319,15 @@ cv::Mat noop(cv::Mat const &image)
 }
 
 inline
+cv::Mat verify(cv::Mat const &image)
+{
+    if (image.empty())
+        throw exceptions::bad_image();
+    return image;
+}
+
+
+inline
 pipeline_fn_t
 if_(std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn)
 {
@@ -375,15 +368,28 @@ channels(int num)
 class video_pipeline
 {
   public:
+    video_pipeline(video_pipeline &&) = default;
+
     video_pipeline(int device)
     {
-       capture_.open(device);
+        if (!capture_.open(device))
+            last_error_ = "Unable to open camera #" + std::to_string(device);
     }
-    video_pipeline(video_pipeline &&) = default;
 
     video_pipeline(std::filesystem::path pathname)
     {
-       capture_.open(pathname.u8string());
+       if (!capture_.open(pathname.u8string()))
+            last_error_ = "Unable to open video file: " + pathname.u8string();
+    }
+
+    std::string last_error() const
+    {
+        return last_error_;
+    }
+
+    bool open() const
+    {
+        return capture_.isOpened();
     }
 
     cv::Mat next_frame()
@@ -402,6 +408,7 @@ class video_pipeline
 
   private:
     cv::VideoCapture capture_;
+    std::string      last_error_;
 };
 
 // capture video from a file
@@ -491,5 +498,37 @@ operator|(std::pair<LHS, RHS> lhs, video_pipeline_terminator)
     return false;
 }
 #pragma warning(pop)
+
+
+// load an image with optional verification.
+// whether or not to load is compulsory -- load or load_ignore_failure must
+// go between a load and any subsequent manipulations through the
+// pipeline interface
+inline
+cv::Mat operator|(std::filesystem::path pathname, image_loader verify)
+{
+    cv::Mat image = load_image(pathname);
+    if (verify != load_ignore_failure  &&  image.empty())
+        throw exceptions::file_not_found(pathname);
+    return image;
+}
+
+// load an image is not empty
+inline
+cv::Mat operator|(cv::Mat const &image, image_loader verify)
+{
+    if (verify != load_ignore_failure  &&  image.empty())
+        throw exceptions::bad_image();
+    return image;
+}
+
+// load a video capture is open
+inline
+video_pipeline const &operator|(video_pipeline const &pipeline, image_loader verify)
+{
+    if (verify != load_ignore_failure  &&  !pipeline.open())
+        throw exceptions::bad_video(pipeline.last_error());
+    return pipeline;
+}
 
 }   // namespace opencv_pipeline

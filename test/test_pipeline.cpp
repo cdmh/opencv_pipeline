@@ -13,7 +13,7 @@ void detect_features()
     // test keypoint feature detections and descriptor extraction
     {
         // extract SIFT descriptors from HARRIS features (features)
-        auto descriptors1 = test_file | verify
+        auto descriptors1 = test_file | load
             | gray_bgr
             | keypoints("HARRIS")
             | descriptors("SIFT")
@@ -21,7 +21,7 @@ void detect_features()
         static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
 
         // find HARRIS keypoint features
-        auto img = test_file | verify | gray_bgr;
+        auto img = test_file | load | gray_bgr;
         auto kps = img | keypoints("HARRIS") | end;
         static_assert(std::is_same<std::vector<cv::KeyPoint>, decltype(kps)>::value);
 
@@ -36,7 +36,7 @@ void detect_features()
     // test region feature detections and descriptor extraction
     {
         // extract MSCR descriptors from SIFT features (features)
-        auto descriptors1 = test_file | verify
+        auto descriptors1 = test_file | load
             | gray_bgr
             | regions("MSCR")
             | descriptors("SIFT")
@@ -44,7 +44,7 @@ void detect_features()
         static_assert(std::is_same<cv::Mat, decltype(descriptors1)>::value);
 
         // find MSCR region features
-        auto img = test_file | verify;
+        auto img = test_file | load;
         auto rgn = img | regions("MSCR") | end;
         static_assert(std::is_same<std::vector<std::vector<cv::Point>>, decltype(rgn)>::value);
 
@@ -57,7 +57,7 @@ void detect_features()
 
         std::vector<std::vector<cv::Point>> regions2;
         auto mser_sift =
-            test_file | verify
+            test_file | load
             | regions("MSER")
             | descriptors("SIFT");
         static_assert(std::is_same<cv::Mat, decltype(mser_sift)>::value);
@@ -94,9 +94,9 @@ void list_processing()
     }
 
     {
-        auto src = { std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg") | verify,
-                     std::filesystem::path(TESTDATA_DIR "images/rgb.png")                         | verify,
-                     std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg")            | verify };
+        auto src = { std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg") | load,
+                     std::filesystem::path(TESTDATA_DIR "images/rgb.png")                         | load,
+                     std::filesystem::path(TESTDATA_DIR "images/da_vinci_human11.jpg")            | load };
         static_assert(std::is_same<std::initializer_list<cv::Mat>, decltype(src)>::value);
         assert(src.size() == 3);
 
@@ -110,9 +110,9 @@ void pipelines_without_assignment()
 {
     using namespace opencv_pipeline;
 
-    test_file | verify;
-    test_file | verify | gray_bgr | verify | mirror | save("result1.png");
-    test_file | verify | gray_bgr | mirror | save("result2.png") | verify;
+    test_file | load;
+    test_file | load | gray_bgr | load | mirror | save("result1.png");
+    test_file | load | gray_bgr | mirror | save("result2.png") | load;
 }
 
 void reuse_pipeline()
@@ -120,14 +120,14 @@ void reuse_pipeline()
     using namespace opencv_pipeline;
 
     auto pipeline = [](std::filesystem::path pathname)->cv::Mat {
-            return pathname | verify | gray_bgr | mirror;
+            return pathname | load | gray_bgr | mirror;
         };
 
     pipeline(test_file)
-        | save("monalisa-gray_bgr-mirror.png") | noverify;
+        | save("monalisa-gray_bgr-mirror.png") | load_ignore_failure;
 
     pipeline(TESTDATA_DIR "images/da_vinci_human11.jpg")
-        | save("da_vinci_human11-gray_bgr-mirror.png") | verify;
+        | save("da_vinci_human11-gray_bgr-mirror.png") | load;
 }
 
 cv::Mat imshow(char const * const winname, cv::Mat const &image)
@@ -177,7 +177,7 @@ void license_plate()
 
     char const * const filename = TESTDATA_DIR "images/vehicle-license-plate-recognition-algorithm-02.jpg";
 
-    auto src = filename | verify | if_(channels(3), gray);
+    auto src = filename | load | if_(channels(3), gray);
     auto mask = preprocess_license_plate(src);
 
     cv::Mat overlay;
@@ -266,8 +266,8 @@ void exhaustive()
 {
     using namespace opencv_pipeline;
 
-    test_file | verify   | show("")        | waitkey(0);
-    test_file | noverify | show("window1") | waitkey(0);
+    test_file | load   | show("")        | waitkey(0);
+    test_file | load_ignore_failure | show("window1") | waitkey(0);
 
     try
     {
@@ -287,10 +287,10 @@ void exhaustive()
 #endif
 
     // loading an image
-    auto img = cv::imread(test_file.u8string()) | verify | mirror;
+    auto img = cv::imread(test_file.u8string()) | load | mirror;
     img = img | gray_bgr;
-    img = load(test_file) | gray_bgr | mirror;
-    img = test_file | verify | gray_bgr | mirror;
+    img = load_image(test_file) | gray_bgr | mirror;
+    img = test_file | load | gray_bgr | mirror;
     static_assert(std::is_same<cv::Mat, decltype(img)>::value);
 
     list_processing();

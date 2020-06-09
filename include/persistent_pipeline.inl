@@ -94,7 +94,7 @@ operator|(std::vector<std::filesystem::path> const &pathnames,
 {
     std::vector<cv::Mat> results;
     for (auto const &pathname : pathnames)
-        results.emplace_back(pathname | verify | pipeline);
+        results.emplace_back(pathname | load | pipeline);
     return results;
 }
 
@@ -106,7 +106,7 @@ operator|(std::array<std::filesystem::path, N> const &pathnames,
     std::array<cv::Mat, N> results;
     auto result = results.begin();
     for (auto const &pathname : pathnames)
-        *result++ = pathname | verify | pipeline;
+        *result++ = pathname | load | pipeline;
     return results;
 }
 
@@ -120,7 +120,7 @@ operator|(std::initializer_list<T> const &list,
     for (auto const &item : list)
     {
         if constexpr (std::is_same<T, std::filesystem::path>::value)
-            *result++ = item | verify | pipeline;
+            *result++ = item | load | pipeline;
         else
             *result++ = item | pipeline;
     }

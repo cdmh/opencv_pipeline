@@ -29,6 +29,16 @@ class bad_image : public std::runtime_error
     }
 };
 
+class bad_video : public std::runtime_error
+{
+  public:
+    bad_video(std::string error)
+      : runtime_error(error)
+    {
+    }
+};
+
+
 class end_of_file : public std::exception
 {
   public:
