@@ -45,11 +45,6 @@ struct waitkey
     std::function<void (int)> fn_;
 };
 
-// image manipulation
-cv::Mat gray(cv::Mat const &image);         // single channel grey-scale image
-cv::Mat gray_bgr(cv::Mat const &image);     // 3-channel grey-scale image
-cv::Mat mirror(cv::Mat const &image);
-
 // result verification
 typedef
 enum { load_ignore_failure=false, load=true }

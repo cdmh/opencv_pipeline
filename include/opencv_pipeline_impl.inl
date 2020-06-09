@@ -250,22 +250,23 @@ gaussian_blur(int dx, int dy, double sigmaX=0.0, double sigmaY=0.0, int border=c
 }
 
 inline
-cv::Mat gray(cv::Mat const &image)
-{
-    return image | color_space(cv::COLOR_BGR2GRAY);
-}
-
-inline
 cv::Mat clone(cv::Mat const &image)
 {
     return image.clone();
 }
 
 inline
-cv::Mat equalize_hist(cv::Mat image)
+cv::Mat equalizeHist(cv::Mat const &image)
 {
-    cv::equalizeHist(image, image);
-    return image;
+    cv::Mat dst;
+    cv::equalizeHist(image, dst);
+    return dst;
+}
+
+inline
+cv::Mat gray(cv::Mat const &image)
+{
+    return image | color_space(cv::COLOR_BGR2GRAY);
 }
 
 inline
@@ -280,6 +281,20 @@ cv::Mat mirror(cv::Mat const &image)
     cv::Mat dst;
     flip(image, dst, 1);
     return dst;
+}
+
+inline
+pipeline_fn_t
+resize(double fx, double fy, int interpolation)
+{
+    auto resizer = [fx, fy, interpolation](cv::Mat const &src) -> cv::Mat {
+        cv::Mat dst;
+        cv::resize(src, dst, cv::Size(), fx, fy, interpolation);
+        return dst;
+    };
+
+    using namespace std::placeholders;
+    return std::bind(resizer, _1);
 }
 
 inline

@@ -86,7 +86,11 @@ int main( int argc, const char** argv )
     {
         image = imread(samples::findFileOrKeep(inputName), IMREAD_COLOR);
         if (image.empty())
+        {
             capture = make_unique<video_pipeline>(std::filesystem::path(samples::findFileOrKeep(inputName).c_str()));
+            if (!capture->open())
+                capture.reset();
+        }
     }
     else
     {
@@ -170,6 +174,8 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
                     CascadeClassifier& nestedCascade,
                     double scale, bool tryflip )
 {
+    using namespace opencv_pipeline;
+
     double t = 0;
     vector<Rect> faces, faces2;
     const static Scalar colors[] =
@@ -183,29 +189,30 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
         Scalar(0,0,255),
         Scalar(255,0,255)
     };
-    Mat gray, smallImg;
 
-    cvtColor( img, gray, COLOR_BGR2GRAY );
     double fx = 1 / scale;
-    resize( gray, smallImg, Size(), fx, fx, INTER_LINEAR_EXACT );
-    equalizeHist( smallImg, smallImg );
+    auto smallImg = img
+        | gray
+        | resize(fx, fx, INTER_LINEAR_EXACT)
+        | equalizeHist;
+
+    auto detect_multi_scale = std::bind(
+        [&cascade](cv::Mat image, std::vector<Rect>& objects) -> cv::Mat {
+            cascade.detectMultiScale(
+                image, objects,
+                1.1, 2, CASCADE_SCALE_IMAGE, Size(30, 30));
+            return image;
+        }, std::placeholders::_1, std::placeholders::_2);
 
     t = (double)getTickCount();
-    cascade.detectMultiScale( smallImg, faces,
-        1.1, 2, 0
-        //|CASCADE_FIND_BIGGEST_OBJECT
-        //|CASCADE_DO_ROUGH_SEARCH
-        |CASCADE_SCALE_IMAGE,
-        Size(30, 30) );
+    smallImg = smallImg
+        | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(faces));
+
     if( tryflip )
     {
-        flip(smallImg, smallImg, 1);
-        cascade.detectMultiScale( smallImg, faces2,
-                                 1.1, 2, 0
-                                 //|CASCADE_FIND_BIGGEST_OBJECT
-                                 //|CASCADE_DO_ROUGH_SEARCH
-                                 |CASCADE_SCALE_IMAGE,
-                                 Size(30, 30) );
+        smallImg = smallImg
+            | mirror
+            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(faces2));
         for( vector<Rect>::const_iterator r = faces2.begin(); r != faces2.end(); ++r )
         {
             faces.push_back(Rect(smallImg.cols - r->x - r->width, r->y, r->width, r->height));
@@ -237,13 +244,11 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
         if( nestedCascade.empty() )
             continue;
         smallImgROI = smallImg( r );
-        nestedCascade.detectMultiScale( smallImgROI, nestedObjects,
-            1.1, 2, 0
-            //|CASCADE_FIND_BIGGEST_OBJECT
-            //|CASCADE_DO_ROUGH_SEARCH
-            //|CASCADE_DO_CANNY_PRUNING
-            |CASCADE_SCALE_IMAGE,
-            Size(30, 30) );
+        smallImgROI
+            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(nestedObjects));
+
+        detect_multi_scale(smallImgROI, nestedObjects);
+
         for ( size_t j = 0; j < nestedObjects.size(); j++ )
         {
             Rect nr = nestedObjects[j];
