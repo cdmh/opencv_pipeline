@@ -196,34 +196,28 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
         | resize(fx, fx, INTER_LINEAR_EXACT)
         | equalizeHist;
 
-    auto detect_multi_scale = std::bind(
-        [&cascade](cv::Mat image, std::vector<Rect>& objects) -> cv::Mat {
+    auto detect_multi_scale =
+        [](cv::Mat image, CascadeClassifier &cascade, std::vector<Rect> &objects) -> cv::Mat {
             cascade.detectMultiScale(
                 image, objects,
                 1.1, 2, CASCADE_SCALE_IMAGE, Size(30, 30));
             return image;
-        }, std::placeholders::_1, std::placeholders::_2);
+        };
 
     t = (double)getTickCount();
     smallImg = smallImg
-        | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(faces));
-
-    if( tryflip )
+        | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(cascade), std::ref(faces))
+        | if_(tryflip, pipeline | mirror | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(cascade), std::ref(faces2)));
+    for( vector<Rect>::const_iterator r = faces2.begin(); r != faces2.end(); ++r )
     {
-        smallImg = smallImg
-            | mirror
-            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(faces2));
-        for( vector<Rect>::const_iterator r = faces2.begin(); r != faces2.end(); ++r )
-        {
-            faces.push_back(Rect(smallImg.cols - r->x - r->width, r->y, r->width, r->height));
-        }
+        faces.push_back(Rect(smallImg.cols - r->x - r->width, r->y, r->width, r->height));
     }
+
     t = (double)getTickCount() - t;
     printf( "detection time = %g ms\n", t*1000/getTickFrequency());
     for ( size_t i = 0; i < faces.size(); i++ )
     {
         Rect r = faces[i];
-        Mat smallImgROI;
         vector<Rect> nestedObjects;
         Point center;
         Scalar color = colors[i%8];
@@ -243,11 +237,9 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
                        color, 3, 8, 0);
         if( nestedCascade.empty() )
             continue;
-        smallImgROI = smallImg( r );
-        smallImgROI
-            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(nestedObjects));
 
-        detect_multi_scale(smallImgROI, nestedObjects);
+        smallImg(r)
+            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(nestedCascade), std::ref(nestedObjects));
 
         for ( size_t j = 0; j < nestedObjects.size(); j++ )
         {
