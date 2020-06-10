@@ -73,21 +73,19 @@ persistent_pipeline operator|(cv::Mat (*lhs)(cv::Mat const &), persistent_pipeli
 }
 
 template<typename C>
-cv::Mat foreach__(cv::Mat const &image, C const &container, persistent_pipeline rhs)
-{
-    int index = 0;
-    cv::Mat result = image;
-    for (auto const &value : container)
-        result = rhs(result, index, value);
-    return result;
-}
-
-template<typename C>
 inline
 pipeline_fn_t
 foreach(C const &container, persistent_pipeline rhs)
 {
-    return std::bind(foreach__<C>, std::placeholders::_1, std::cref(container), rhs);
+    return std::bind(
+        [](cv::Mat const &image, auto const &container, persistent_pipeline rhs) -> cv::Mat {
+            int index = 0;
+            cv::Mat result = image;
+            for (auto const &value : container)
+                result = rhs(result, index, value);
+            return result;
+        },
+        std::placeholders::_1, std::cref(container), rhs);
 }
 
 

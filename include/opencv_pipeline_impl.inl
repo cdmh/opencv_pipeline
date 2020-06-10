@@ -167,21 +167,22 @@ detail::feature_detector<std::vector<cv::Point>> operator|(std::vector<std::vect
 
 
 template<typename C>
-cv::Mat foreach_(cv::Mat const &image, C const &container, std::function<cv::Mat (cv::Mat, int, typename C::value_type)> rhs)
-{
-    int index = 0;
-    cv::Mat result = image;
-    for (auto const &value : container)
-        result = rhs(result, index, value);
-    return result;
-}
-
-template<typename C>
 inline
 pipeline_fn_t
 foreach(C const &container, std::function<cv::Mat (cv::Mat, int, typename C::value_type)> rhs)
 {
-    return std::bind(foreach_<C>, std::placeholders::_1, std::cref(container), rhs);
+    using func_t = std::function<cv::Mat (cv::Mat, int, typename C::value_type)>;
+    return std::bind(
+        [](cv::Mat const &image, auto const &container, func_t rhs) -> cv::Mat
+        {
+            int index = 0;
+            cv::Mat result = image;
+            for (auto const &value : container)
+                result = rhs(result, index, value);
+            return result;
+        },
+        std::placeholders::_1,
+        std::cref(container), rhs);
 }
 
 
@@ -346,18 +347,15 @@ threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OT
 
 
 inline
-cv::Mat
-side_effect_(cv::Mat const &img, std::function<void ()> fn)
-{
-    fn();
-    return img; 
-}
-
-inline
 pipeline_fn_t
 side_effect(std::function<void ()> fn)
 {
-    return std::bind(side_effect_, std::placeholders::_1, fn);
+    return std::bind(
+        [](cv::Mat const &img, std::function<void ()> fn) -> cv::Mat {
+            fn();
+            return img; 
+        },
+        std::placeholders::_1, fn);
 }
 
 
