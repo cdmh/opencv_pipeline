@@ -165,11 +165,34 @@ detail::feature_detector<std::vector<cv::Point>> operator|(std::vector<std::vect
     return detail::feature_detector<std::vector<cv::Point>>(image, features);
 }
 
+
+template<typename C>
+cv::Mat foreach_(cv::Mat const &image, C const &container, std::function<cv::Mat (cv::Mat, int, typename C::value_type)> rhs)
+{
+    int index = 0;
+    cv::Mat result = image;
+    for (auto const &value : container)
+        result = rhs(result, index, value);
+    return result;
+}
+
+template<typename C>
+inline
+pipeline_fn_t
+foreach(C const &container, std::function<cv::Mat (cv::Mat, int, typename C::value_type)> rhs)
+{
+    return std::bind(foreach_<C>, std::placeholders::_1, std::cref(container), rhs);
+}
+
+
 // enable early pipeline to detect features without extracting descriptors
 // e.g. auto kps = test_file | load | gray_bgr | features("HARRIS") | end;
 //      static_assert(std::is_same<std::vector<std::vector<cv::KeyPoint>>, decltype(kps)>::value);
 inline
-std::vector<std::vector<cv::Point>> operator|(detail::feature_detector<std::vector<cv::Point>> const &detector, pipeline_terminator)
+std::vector<std::vector<cv::Point>>
+operator|(
+    detail::feature_detector<std::vector<cv::Point>> const &detector,
+    pipeline_terminator)
 {
     return detector.features;
 }
@@ -322,13 +345,27 @@ threshold(double thresh, double maxval, int type=CV_THRESH_BINARY | CV_THRESH_OT
 }
 
 
-//
-// conditions
-//
-
+inline
+cv::Mat
+side_effect_(cv::Mat const &img, std::function<void ()> fn)
+{
+    fn();
+    return img; 
+}
 
 inline
-cv::Mat noop(cv::Mat const &image)
+pipeline_fn_t
+side_effect(std::function<void ()> fn)
+{
+    return std::bind(side_effect_, std::placeholders::_1, fn);
+}
+
+
+
+
+// reset the pipeline image
+inline
+cv::Mat reset(cv::Mat const &image)
 {
     return image;
 }
@@ -342,6 +379,10 @@ cv::Mat verify(cv::Mat const &image)
 }
 
 
+//
+// conditions
+//
+
 inline
 pipeline_fn_t
 if_(std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn)
@@ -354,7 +395,9 @@ inline
 pipeline_fn_t
 if_(bool const cond, pipeline_fn_t fn)
 {
-    return cond? fn : noop;
+    // if the condition is true, return the pipeline otherwise use reset()
+    // to copy the image back into the pipeline
+    return cond? fn : reset;
 }
 
 inline
@@ -475,6 +518,14 @@ operator|(std::pair<LHS, RHS> lhs, cv::Mat(*rhs)(cv::Mat const &))
 template<typename LHS, typename RHS>
 std::pair<std::pair<LHS, RHS>, pipeline_fn_t>
 operator|(std::pair<LHS, RHS> lhs, pipeline_fn_t const &rhs)
+{
+    return {lhs, rhs};
+}
+
+// pipe into a pipeline
+template<typename LHS, typename RHS>
+std::pair<std::pair<LHS, RHS>, persistent_pipeline>
+operator|(std::pair<LHS, RHS> lhs, persistent_pipeline const &rhs)
 {
     return {lhs, rhs};
 }
