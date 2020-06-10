@@ -183,20 +183,6 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
     using namespace opencv_pipeline;
     using namespace std::placeholders;
 
-    double t = 0;
-    vector<Rect> faces, eyes;
-    const Scalar colors[] =
-    {
-        Scalar(255,0,0),
-        Scalar(255,128,0),
-        Scalar(255,255,0),
-        Scalar(0,255,0),
-        Scalar(0,128,255),
-        Scalar(0,255,255),
-        Scalar(0,0,255),
-        Scalar(255,0,255)
-    };
-
     auto detect_multi_scale =
         [](cv::Mat image, CascadeClassifier &cascade, auto it, bool mirror) -> cv::Mat {
             std::vector<Rect> objects;
@@ -214,10 +200,18 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             return image;
         };
 
-    auto annotate = [scale, &colors](cv::Mat &result, cv::Mat img, int i, Rect r) -> cv::Mat {
-        // we are drawing on a clone of the original, captured in
-        // the lambda and not the processed image in the pipeline
-        // which has been grey scaled and possibly flipped
+    auto annotate = [](cv::Mat &result, double scale, cv::Mat img, int i, Rect r) -> cv::Mat {
+        Scalar const colors[] =
+        {
+            Scalar(255,0,0),
+            Scalar(255,128,0),
+            Scalar(255,255,0),
+            Scalar(0,255,0),
+            Scalar(0,128,255),
+            Scalar(0,255,255),
+            Scalar(0,0,255),
+            Scalar(255,0,255)
+        };
         Scalar color = colors[i%8];
 
         double aspect_ratio = (double)r.width/r.height;
@@ -236,7 +230,7 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
         return img;
     };
 
-    auto find_eyes = [scale, &colors, &detect_multi_scale](cv::Mat &result, CascadeClassifier &cascade, auto eyes, cv::Mat img, int i, Rect r) -> cv::Mat
+    auto find_eyes = [](auto detect_multi_scale, CascadeClassifier &cascade, auto eyes, cv::Mat img, int, Rect r) -> cv::Mat
     {
         std::vector<Rect> objects;
 
@@ -253,6 +247,8 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
         return img;
     };
 
+    double t = 0;
+    vector<Rect> faces;
     auto result = img | clone;
     std::vector<cv::Rect> objects;
     img | pipeline | gray
@@ -270,12 +266,11 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             t = (double)getTickCount() - t;
             printf( "detection time = %g ms\n", t*1000/getTickFrequency());
         })
-        // annotate the image by drawing circles around the detected objects
-        | foreach(faces, std::bind(annotate, std::ref(result), _1, _2, _3))
+        | foreach(faces, std::bind(annotate, std::ref(result), scale, _1, _2, _3))
         | if_(!nestedCascade.empty(),
             pipeline
-            | foreach(faces, std::bind(find_eyes, std::ref(result), std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
-            | foreach(objects, std::bind(annotate, std::ref(result), _1, _2, _3)));
+            | foreach(faces, std::bind(find_eyes, detect_multi_scale, std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
+            | foreach(objects, std::bind(annotate, std::ref(result), scale, _1, _2, _3)));
     return result;
 }
 
