@@ -116,11 +116,17 @@ int main( int argc, const char** argv )
         *capture | load;
         cout << "Video capturing has been started ..." << endl;
 
-        *capture
-            | verify // break on empty frame
-            | detect_and_draw
-            | waitkey(10, user_term)
-            | play;
+        try
+        {
+            *capture
+                | verify // break on empty frame
+                | detect_and_draw
+                | waitkey(10, user_term)
+                | play;
+        }
+        catch(exceptions::end_of_file &)
+        {
+        }
     }
     else
     {
@@ -129,7 +135,7 @@ int main( int argc, const char** argv )
         {
             image
                 | detect_and_draw
-                | waitkey(0, user_term);
+                | waitkey(0);
         }
         else if( !inputName.empty() )
         {
@@ -208,44 +214,49 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             return image;
         };
 
-    auto result = img | clone;
-    auto annotate = [&result, scale, &colors](cv::Mat img, int i, Rect r) -> cv::Mat {
+    auto annotate = [scale, &colors](cv::Mat &result, cv::Mat img, int i, Rect r) -> cv::Mat {
         // we are drawing on a clone of the original, captured in
         // the lambda and not the processed image in the pipeline
         // which has been grey scaled and possibly flipped
         Scalar color = colors[i%8];
 
-        cv::Size size;
-        cv::Point ofs;
-        img.locateROI(size, ofs);
         double aspect_ratio = (double)r.width/r.height;
         if( 0.75 < aspect_ratio && aspect_ratio < 1.3 )
         {
-            Point center = ofs;
-            center.x += cvRound((r.x + r.width*0.5)*scale);
-            center.y += cvRound((r.y + r.height*0.5)*scale);
+            Point center;
+            center.x = cvRound((r.x + r.width*0.5)*scale);
+            center.y = cvRound((r.y + r.height*0.5)*scale);
             auto radius = cvRound((r.width + r.height)*0.25*scale);
             circle( result, center, radius, color, 3, 8, 0 );
         }
         else
-            rectangle( result, Point(ofs.x+cvRound(r.x*scale), ofs.y+cvRound(r.y*scale)),
-                        Point(ofs.x+cvRound((r.x + r.width-1)*scale), ofs.y+cvRound((r.y + r.height-1)*scale)),
+            rectangle( result, Point(cvRound(r.x*scale), cvRound(r.y*scale)),
+                        Point(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-1)*scale)),
                         color, 3, 8, 0);
         return img;
     };
 
-    auto find_eyes = [&result, scale, &colors, &detect_multi_scale, &annotate](CascadeClassifier &cascade, cv::Mat img, int i, Rect r) -> cv::Mat {
-        std::vector<cv::Rect> objects;
+    auto find_eyes = [scale, &colors, &detect_multi_scale](cv::Mat &result, CascadeClassifier &cascade, auto eyes, cv::Mat img, int i, Rect r) -> cv::Mat
+    {
+        std::vector<Rect> objects;
+
         img(r)
-            | std::bind(detect_multi_scale, _1, std::ref(cascade), back_inserter(objects), false)
-            | foreach(objects, annotate);
+            | std::bind(detect_multi_scale,
+                _1,
+                std::ref(cascade),
+                (r.x == 0  &&  r.y == 0)? eyes : back_inserter(objects),
+                false);
+
+        for (auto const &obj : objects)
+            *eyes++ = Rect(r.x+obj.x, r.y+obj.y, obj.width, obj.height);
+
         return img;
     };
 
-    t = (double)getTickCount();
-    double fx = 1 / scale;
-    img | gray
-        | resize(fx, fx, INTER_LINEAR_EXACT)
+    auto result = img | clone;
+    std::vector<cv::Rect> objects;
+    img | pipeline | gray
+        | resize(1/scale, 1/scale, INTER_LINEAR_EXACT)
         | equalizeHist
         | side_effect([&t](){
             t = (double)getTickCount();
@@ -260,10 +271,11 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             printf( "detection time = %g ms\n", t*1000/getTickFrequency());
         })
         // annotate the image by drawing circles around the detected objects
-        | foreach(faces, annotate)
+        | foreach(faces, std::bind(annotate, std::ref(result), _1, _2, _3))
         | if_(!nestedCascade.empty(),
-              foreach(faces, std::bind(find_eyes, std::ref(nestedCascade), _1, _2, _3)));
-
+            pipeline
+            | foreach(faces, std::bind(find_eyes, std::ref(result), std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
+            | foreach(objects, std::bind(annotate, std::ref(result), _1, _2, _3)));
     return result;
 }
 
