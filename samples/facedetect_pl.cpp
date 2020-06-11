@@ -26,7 +26,7 @@ static void help(const char** argv)
             "\tUsing OpenCV version " << CV_VERSION << "\n" << endl;
 }
 
-cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
+Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
                     CascadeClassifier& nestedCascade,
                     double scale, bool tryflip );
 
@@ -107,28 +107,35 @@ int main( int argc, const char** argv )
             throw exceptions::end_of_file();
     };
 
-    auto detect_and_draw = std::bind( detectAndDraw, std::placeholders::_1, cascade, nestedCascade, scale, tryflip );
+    auto detect_and_draw = pipeline
+        | std::bind( detectAndDraw, std::placeholders::_1, cascade, nestedCascade, scale, tryflip )
+        | show("result");
 
     if(capture)
     {
         *capture | load;
         cout << "Video capturing has been started ..." << endl;
 
-        *capture
-            | noop | verify // break on empty frame
-            | clone
-            | detect_and_draw
-            | show("result")
-            | waitkey(10, user_term)
-            | play;
+        try
+        {
+            *capture
+                | verify // break on empty frame
+                | detect_and_draw
+                | waitkey(10, user_term)
+                | play;
+        }
+        catch(exceptions::end_of_file &)
+        {
+        }
     }
     else
     {
         cout << "Detecting face(s) in " << inputName << endl;
         if( !image.empty() )
         {
-            detectAndDraw( image, cascade, nestedCascade, scale, tryflip );
-            waitKey(0);
+            image
+                | detect_and_draw
+                | waitkey(0);
         }
         else if( !inputName.empty() )
         {
@@ -150,7 +157,6 @@ int main( int argc, const char** argv )
                     {
                         std::filesystem::path(buf) | load | verify
                             | detect_and_draw
-                            | show("result")
                             | waitkey(0, user_term);
                     }
                     catch(exceptions::end_of_file &)
@@ -175,82 +181,97 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
                     double scale, bool tryflip )
 {
     using namespace opencv_pipeline;
-
-    double t = 0;
-    vector<Rect> faces, faces2;
-    const static Scalar colors[] =
-    {
-        Scalar(255,0,0),
-        Scalar(255,128,0),
-        Scalar(255,255,0),
-        Scalar(0,255,0),
-        Scalar(0,128,255),
-        Scalar(0,255,255),
-        Scalar(0,0,255),
-        Scalar(255,0,255)
-    };
-
-    double fx = 1 / scale;
-    auto smallImg = img
-        | gray
-        | resize(fx, fx, INTER_LINEAR_EXACT)
-        | equalizeHist;
+    using namespace std::placeholders;
 
     auto detect_multi_scale =
-        [](cv::Mat image, CascadeClassifier &cascade, std::vector<Rect> &objects) -> cv::Mat {
+        [](cv::Mat image, CascadeClassifier &cascade, auto it, bool mirror) -> cv::Mat {
+            std::vector<Rect> objects;
             cascade.detectMultiScale(
                 image, objects,
                 1.1, 2, CASCADE_SCALE_IMAGE, Size(30, 30));
+
+            if (mirror)
+            {
+                for (auto const &rect : objects)
+                    *it++ = Rect(image.cols - rect.x - rect.width, rect.y, rect.width, rect.height);
+            }
+            else
+                std::move(objects.begin(), objects.end(), it);
             return image;
         };
 
-    t = (double)getTickCount();
-    smallImg = smallImg
-        | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(cascade), std::ref(faces))
-        | if_(tryflip, pipeline | mirror | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(cascade), std::ref(faces2)));
-    for( vector<Rect>::const_iterator r = faces2.begin(); r != faces2.end(); ++r )
-    {
-        faces.push_back(Rect(smallImg.cols - r->x - r->width, r->y, r->width, r->height));
-    }
-
-    t = (double)getTickCount() - t;
-    printf( "detection time = %g ms\n", t*1000/getTickFrequency());
-    for ( size_t i = 0; i < faces.size(); i++ )
-    {
-        Rect r = faces[i];
-        vector<Rect> nestedObjects;
-        Point center;
+    auto annotate = [](cv::Mat &result, double scale, cv::Mat img, int i, Rect r) -> cv::Mat {
+        Scalar const colors[] =
+        {
+            Scalar(255,0,0),
+            Scalar(255,128,0),
+            Scalar(255,255,0),
+            Scalar(0,255,0),
+            Scalar(0,128,255),
+            Scalar(0,255,255),
+            Scalar(0,0,255),
+            Scalar(255,0,255)
+        };
         Scalar color = colors[i%8];
-        int radius;
 
         double aspect_ratio = (double)r.width/r.height;
         if( 0.75 < aspect_ratio && aspect_ratio < 1.3 )
         {
+            Point center;
             center.x = cvRound((r.x + r.width*0.5)*scale);
             center.y = cvRound((r.y + r.height*0.5)*scale);
-            radius = cvRound((r.width + r.height)*0.25*scale);
-            circle( img, center, radius, color, 3, 8, 0 );
+            auto radius = cvRound((r.width + r.height)*0.25*scale);
+            circle( result, center, radius, color, 3, 8, 0 );
         }
         else
-            rectangle( img, Point(cvRound(r.x*scale), cvRound(r.y*scale)),
-                       Point(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-1)*scale)),
-                       color, 3, 8, 0);
-        if( nestedCascade.empty() )
-            continue;
+            rectangle( result, Point(cvRound(r.x*scale), cvRound(r.y*scale)),
+                        Point(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-1)*scale)),
+                        color, 3, 8, 0);
+        return img;
+    };
 
-        smallImg(r)
-            | std::bind(detect_multi_scale, std::placeholders::_1, std::ref(nestedCascade), std::ref(nestedObjects));
+    auto find_eyes = [](auto detect_multi_scale, CascadeClassifier &cascade, auto eyes, cv::Mat img, int, Rect r) -> cv::Mat
+    {
+        std::vector<Rect> objects;
 
-        for ( size_t j = 0; j < nestedObjects.size(); j++ )
-        {
-            Rect nr = nestedObjects[j];
-            center.x = cvRound((r.x + nr.x + nr.width*0.5)*scale);
-            center.y = cvRound((r.y + nr.y + nr.height*0.5)*scale);
-            radius = cvRound((nr.width + nr.height)*0.25*scale);
-            circle( img, center, radius, color, 3, 8, 0 );
-        }
-    }
-    return img;
+        img(r)
+            | std::bind(detect_multi_scale,
+                _1,
+                std::ref(cascade),
+                (r.x == 0  &&  r.y == 0)? eyes : back_inserter(objects),
+                false);
+
+        for (auto const &obj : objects)
+            *eyes++ = Rect(r.x+obj.x, r.y+obj.y, obj.width, obj.height);
+
+        return img;
+    };
+
+    double t = 0;
+    vector<Rect> faces;
+    auto result = img | clone;
+    std::vector<cv::Rect> objects;
+    img | pipeline | gray
+        | resize(1/scale, 1/scale, INTER_LINEAR_EXACT)
+        | equalizeHist
+        | side_effect([&t](){
+            t = (double)getTickCount();
+        })
+        | std::bind(detect_multi_scale, _1, std::ref(cascade), back_inserter(faces), false)
+        | if_(tryflip,
+              pipeline
+                | mirror
+                | std::bind(detect_multi_scale, _1, std::ref(cascade), back_inserter(faces), true))
+        | side_effect([&t](){
+            t = (double)getTickCount() - t;
+            printf( "detection time = %g ms\n", t*1000/getTickFrequency());
+        })
+        | foreach(faces, std::bind(annotate, std::ref(result), scale, _1, _2, _3))
+        | if_(!nestedCascade.empty(),
+            pipeline
+            | foreach(faces, std::bind(find_eyes, detect_multi_scale, std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
+            | foreach(objects, std::bind(annotate, std::ref(result), scale, _1, _2, _3)));
+    return result;
 }
 
 }   // namespace pipeline_samples

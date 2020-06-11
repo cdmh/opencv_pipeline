@@ -3,7 +3,7 @@
 namespace opencv_pipeline {
 
 typedef
-enum { pipeline=1, foreach }
+enum { pipeline=1, apply }
 delay_result;
 
 inline
@@ -70,6 +70,22 @@ inline
 persistent_pipeline operator|(cv::Mat (*lhs)(cv::Mat const &), persistent_pipeline rhs)
 {
     return rhs.append(lhs);
+}
+
+template<typename C>
+inline
+pipeline_fn_t
+foreach(C const &container, persistent_pipeline rhs)
+{
+    return std::bind(
+        [](cv::Mat const &image, auto const &container, persistent_pipeline rhs) -> cv::Mat {
+            int index = 0;
+            cv::Mat result = image;
+            for (auto const &value : container)
+                result = rhs(result, index, value);
+            return result;
+        },
+        std::placeholders::_1, std::cref(container), rhs);
 }
 
 

@@ -75,14 +75,14 @@ void file_processing()
     static_assert(std::is_same<std::vector<cv::Mat>, decltype(images)>::value);
 
     images = directory_iterator(TESTDATA_DIR "images/*.png")
-      | (foreach | gray | mirror | show("Image") | waitkey(0));
+      | (apply | gray | mirror | show("Image") | waitkey(0));
 }
 
 void list_processing()
 {
     using namespace opencv_pipeline;
 
-    auto pipeline = foreach | gray | sobel(5, 5, 7) | show("Image") | waitkey(0);
+    auto pipeline = apply | gray | sobel(5, 5, 7) | show("Image") | waitkey(0);
     {
         auto files = { std::filesystem::path(TESTDATA_DIR "images/african-art-1732250_960_720.jpg"),
                        std::filesystem::path(TESTDATA_DIR "images/rgb.png"),
