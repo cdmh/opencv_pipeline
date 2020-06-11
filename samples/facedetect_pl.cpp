@@ -200,7 +200,7 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             return image;
         };
 
-    auto annotate = [](cv::Mat &result, double scale, cv::Mat img, int i, Rect r) -> cv::Mat {
+    auto annotate = [](cv::Mat img, double scale, int i, Rect r) -> cv::Mat {
         Scalar const colors[] =
         {
             Scalar(255,0,0),
@@ -221,10 +221,10 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             center.x = cvRound((r.x + r.width*0.5)*scale);
             center.y = cvRound((r.y + r.height*0.5)*scale);
             auto radius = cvRound((r.width + r.height)*0.25*scale);
-            circle( result, center, radius, color, 3, 8, 0 );
+            circle( img, center, radius, color, 3, 8, 0 );
         }
         else
-            rectangle( result, Point(cvRound(r.x*scale), cvRound(r.y*scale)),
+            rectangle( img, Point(cvRound(r.x*scale), cvRound(r.y*scale)),
                         Point(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-1)*scale)),
                         color, 3, 8, 0);
         return img;
@@ -249,7 +249,6 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
 
     double t = 0;
     vector<Rect> faces;
-    auto result = img | clone;
     std::vector<cv::Rect> objects;
     img | pipeline | gray
         | resize(1/scale, 1/scale, INTER_LINEAR_EXACT)
@@ -266,12 +265,15 @@ cv::Mat detectAndDraw( Mat const & img, CascadeClassifier& cascade,
             t = (double)getTickCount() - t;
             printf( "detection time = %g ms\n", t*1000/getTickFrequency());
         })
-        | foreach(faces, std::bind(annotate, std::ref(result), scale, _1, _2, _3))
-        | if_(!nestedCascade.empty(),
+        | if_(
+            nestedCascade.empty(),
+            pipeline | std::bind(reset, img),
             pipeline
-            | foreach(faces, std::bind(find_eyes, detect_multi_scale, std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
-            | foreach(objects, std::bind(annotate, std::ref(result), scale, _1, _2, _3)));
-    return result;
+                | foreach(faces, std::bind(find_eyes, detect_multi_scale, std::ref(nestedCascade), back_inserter(objects), _1, _2, _3))
+                | std::bind(reset, img)
+                | foreach(objects, std::bind(annotate, _1, scale, _2, _3)))
+        | foreach(faces, std::bind(annotate, _1, scale, _2, _3));
+    return img;
 }
 
 }   // namespace pipeline_samples

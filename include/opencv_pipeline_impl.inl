@@ -391,18 +391,18 @@ if_(std::function<bool const (cv::Mat const &)> cond, pipeline_fn_t fn)
 
 inline
 pipeline_fn_t
-if_(bool const cond, pipeline_fn_t fn)
+if_(bool const cond, pipeline_fn_t if_fn, pipeline_fn_t else_fn=reset)
 {
-    // if the condition is true, return the pipeline otherwise use reset()
-    // to copy the image back into the pipeline
-    return cond? fn : reset;
+    return cond? if_fn : else_fn;
 }
 
 inline
 persistent_pipeline
-if_(bool const cond, persistent_pipeline pipeline)
+if_(bool const cond,
+    persistent_pipeline if_pipeline,
+    persistent_pipeline else_pipeline=persistent_pipeline())
 {
-    return cond? pipeline : persistent_pipeline();
+    return cond? if_pipeline : else_pipeline;
 }
 
 
